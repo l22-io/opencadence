@@ -27,14 +27,46 @@ venv/
 Thumbs.db
 Desktop.ini
 
-# AI / LLM assistants
+# AI / LLM assistants — Claude
 .claude/
 .claude_output
+.claude.md
+.claude-api-key
+CLAUDE.md
+claude_desktop_config.json
+.clauderc
+.claude-settings
+.claude-project
+.mcp/
+.mcp.json
+mcp.json
+mcp-config.json
+
+# AI / LLM assistants — Cursor
 .cursor/
 .cursorignore
 .cursorules
-.aider*
+.cursorrules
+
+# AI / LLM assistants — GitHub Copilot
 .copilot/
+.github/copilot-*
+copilot-instructions.md
+
+# AI / LLM assistants — Aider
+.aider*
+
+# AI / LLM assistants — Google / Gemini
+.gemini/
+GEMINI.md
+.idx/
+
+# AI / LLM assistants — Amazon
+.amazonq/
+.codewhisperer/
+.aws/amazonq/
+
+# AI / LLM assistants — Others
 .codeium/
 .continue/
 .tabby/
@@ -42,6 +74,7 @@ Desktop.ini
 .sourcegraph/
 .cody/
 .windsurf/
+.windsurfrules
 .supermaven/
 .augment/
 .codestory/
@@ -54,16 +87,30 @@ Desktop.ini
 .v0/
 .lovable/
 .replit/
-.idx/
 .pieces/
 .blackbox/
-.amazonq/
-.codewhisperer/
-.gemini/
-AGENTS.md
-GEMINI.md
+.trae/
+.roo/
+.goose/
+.plandex/
+.sweep/
+.grit/
+.refact/
+.cline/
+.clinerules
+.roomodes
 
-# LLM context/memory files
+# AI / LLM — generic patterns
+AGENTS.md
+.ai/
+.llm/
+.prompts/
+*-prompt.md
+*.prompt
+.anthropic/
+.openai/
+
+# LLM context/memory/planning files
 docs/superpowers/
 
 # Docker volumes
