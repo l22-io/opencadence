@@ -31,7 +31,7 @@ This is a deliberate architectural choice: the internal boundaries demonstrate d
 - Subscribes to `DataReceived` events
 - Runs configurable processing chains:
   - Resampling and gap filling
-  - Rolling aggregations (1min, 5min, 1hr)
+  - Rolling aggregations (1min, 1hr)
   - Anomaly flagging (e.g., resting HR outside personal baseline)
 - Processing chains are pluggable per metric type: each metric in the registry maps to an ordered list of processor class names. Contributors add a processor by subclassing `BaseProcessor` and registering it in the metric's YAML definition.
 - Failed processing writes to a dead-letter table with error context for later inspection/replay
@@ -47,7 +47,7 @@ This is a deliberate architectural choice: the internal boundaries demonstrate d
 #### 4. API (`api/`)
 - Query endpoints for processed data
 - Filtering by time range, metric type, resolution
-- WebSocket endpoint (`ws:///api/v1/stream`) for real-time streaming:
+- WebSocket endpoint (`/api/v1/stream`) for real-time streaming:
   - Clients subscribe per device and/or metric type
   - Authenticated via JWT token in the initial handshake
   - Server pushes `DataProcessed` events matching the subscription filter
