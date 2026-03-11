@@ -1,0 +1,90 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+.venv/
+venv/
+*.whl
+
+# Environment
+.env
+*.local.*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# AI / LLM assistants
+.claude/
+.claude_output
+.cursor/
+.cursorignore
+.cursorules
+.aider*
+.copilot/
+.codeium/
+.continue/
+.tabby/
+.tabnine/
+.sourcegraph/
+.cody/
+.windsurf/
+.supermaven/
+.augment/
+.codestory/
+.mentat/
+.bito/
+.qodo/
+.codiumai/
+.devin/
+.bolt/
+.v0/
+.lovable/
+.replit/
+.idx/
+.pieces/
+.blackbox/
+.amazonq/
+.codewhisperer/
+.gemini/
+AGENTS.md
+GEMINI.md
+
+# LLM context/memory files
+docs/superpowers/
+
+# Docker volumes
+data/
+pgdata/
+
+# Test / Coverage
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Alembic
+backend/migrations/versions/__pycache__/
+
+# Mobile build artifacts
+apps/ios/build/
+apps/ios/DerivedData/
+apps/ios/*.xcworkspace/xcuserdata/
+apps/android/.gradle/
+apps/android/build/
+apps/android/app/build/
+apps/android/local.properties
