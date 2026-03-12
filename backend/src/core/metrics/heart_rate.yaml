@@ -1,0 +1,13 @@
+name: heart_rate
+label: Heart Rate
+unit: bpm
+valid_range:
+  min: 20
+  max: 300
+aggregation: mean
+processors:
+  - validators.RangeValidator
+fhir:
+  code: "8867-4"
+  system: "http://loinc.org"
+  display: "Heart rate"

@@ -1,0 +1,13 @@
+name: hrv
+label: Heart Rate Variability
+unit: ms
+valid_range:
+  min: 0
+  max: 500
+aggregation: mean
+processors:
+  - validators.RangeValidator
+fhir:
+  code: "80404-7"
+  system: "http://loinc.org"
+  display: "R-R interval.standard deviation (Heart rate variability)"

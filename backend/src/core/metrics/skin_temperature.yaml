@@ -1,0 +1,13 @@
+name: skin_temperature
+label: Skin Temperature
+unit: "\xB0C"
+valid_range:
+  min: 25.0
+  max: 42.0
+aggregation: mean
+processors:
+  - validators.RangeValidator
+fhir:
+  code: "39106-0"
+  system: "http://loinc.org"
+  display: "Temperature of Skin"

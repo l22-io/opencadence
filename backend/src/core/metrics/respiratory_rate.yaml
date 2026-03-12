@@ -1,0 +1,13 @@
+name: respiratory_rate
+label: Respiratory Rate
+unit: breaths/min
+valid_range:
+  min: 4
+  max: 60
+aggregation: mean
+processors:
+  - validators.RangeValidator
+fhir:
+  code: "9279-1"
+  system: "http://loinc.org"
+  display: "Respiratory rate"

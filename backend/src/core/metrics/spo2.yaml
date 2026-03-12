@@ -1,0 +1,13 @@
+name: spo2
+label: Blood Oxygen Saturation
+unit: "%"
+valid_range:
+  min: 50
+  max: 100
+aggregation: mean
+processors:
+  - validators.RangeValidator
+fhir:
+  code: "2708-6"
+  system: "http://loinc.org"
+  display: "Oxygen saturation in Arterial blood"
