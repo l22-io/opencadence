@@ -1,4 +1,5 @@
 import logging
+import secrets
 from datetime import UTC, datetime, timedelta
 from typing import Any
 from uuid import UUID
@@ -15,6 +16,21 @@ def hash_api_key(raw_key: str) -> str:
 
 def verify_api_key(raw_key: str, hashed: str) -> bool:
     return bcrypt.checkpw(raw_key.encode(), hashed.encode())
+
+
+def generate_api_key(device_id: UUID) -> str:
+    suffix = secrets.token_hex(16)
+    return f"oc_{device_id}_{suffix}"
+
+
+def parse_api_key(raw_key: str) -> UUID | None:
+    parts = raw_key.split("_", 2) if raw_key else []
+    if len(parts) != 3 or parts[0] != "oc":
+        return None
+    try:
+        return UUID(parts[1])
+    except ValueError:
+        return None
 
 
 def create_jwt_token(

@@ -62,9 +62,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
 
     # Mount routers
-    app.include_router(create_ingest_router(service=ingestion_service, event_bus=event_bus))
-    app.include_router(create_api_router(session_factory=session_factory, repo=repo))
-    app.include_router(create_fhir_router(session_factory=session_factory, repo=repo, registry=registry))
+    app.include_router(create_ingest_router(service=ingestion_service, event_bus=event_bus, session_factory=session_factory))
+    app.include_router(create_api_router(
+        session_factory=session_factory, repo=repo,
+        jwt_secret=settings.jwt_secret, jwt_algorithm=settings.jwt_algorithm,
+    ))
+    app.include_router(create_fhir_router(
+        session_factory=session_factory, repo=repo, registry=registry,
+        jwt_secret=settings.jwt_secret, jwt_algorithm=settings.jwt_algorithm,
+    ))
 
     @app.get("/health")
     async def health() -> dict[str, str]:

@@ -1,12 +1,16 @@
 import logging
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from src.core.dependencies import require_api_key
 from src.core.events import Event, EventBus
 from src.core.models import IngestPayload
 from src.ingestion.service import IngestionService
+from src.storage.models import Device
 
 logger = logging.getLogger(__name__)
 
@@ -21,11 +25,31 @@ class IngestResponse(BaseModel):
     accepted: int
 
 
-def create_ingest_router(service: IngestionService, event_bus: EventBus) -> APIRouter:
+def create_ingest_router(
+    service: IngestionService,
+    event_bus: EventBus,
+    session_factory: async_sessionmaker[AsyncSession] | None = None,
+) -> APIRouter:
     router = APIRouter(prefix="/api/v1", tags=["ingestion"])
 
+    async def get_authenticated_device(
+        api_key: str | None = Header(None, alias="X-API-Key"),
+    ) -> Device:
+        if session_factory is None:
+            raise HTTPException(status_code=500, detail="Auth not configured")
+        async with session_factory() as session:
+            return await require_api_key(api_key=api_key, session=session)
+
     @router.post("/ingest", response_model=IngestResponse, status_code=202)
-    async def ingest(payload: IngestPayload) -> IngestResponse:
+    async def ingest(
+        payload: IngestPayload,
+        device: Device = Depends(get_authenticated_device),
+    ) -> IngestResponse:
+        if payload.device_id != device.id:
+            raise HTTPException(
+                status_code=403, detail="Device ID does not match API key"
+            )
+
         errors = service.validate(payload)
         if errors:
             raise HTTPException(status_code=422, detail={"errors": errors})
