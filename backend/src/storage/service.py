@@ -1,0 +1,72 @@
+import json
+import logging
+from datetime import datetime
+from typing import Any
+from uuid import UUID
+
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
+from src.core.models import IngestPayload
+from src.core.registry import MetricRegistry
+from src.processing.base import AnomalyFlag
+from src.processing.service import ProcessingResult, ProcessingService
+from src.storage.repository import SampleRepository
+
+logger = logging.getLogger(__name__)
+
+
+class StorageService:
+    """Subscribes to events and persists data to TimescaleDB."""
+
+    def __init__(
+        self,
+        session_factory: async_sessionmaker[AsyncSession],
+        registry: MetricRegistry,
+    ) -> None:
+        self._session_factory = session_factory
+        self._repo = SampleRepository()
+        self._processing = ProcessingService(registry=registry)
+
+    async def handle_data_received(self, payload: IngestPayload) -> None:
+        """Process and store incoming data."""
+        try:
+            result = self._processing.process(payload.device_id, payload.batch)
+
+            async with self._session_factory() as session:
+                # Store raw samples
+                if result.processed_samples:
+                    insert_payload = IngestPayload(
+                        device_id=payload.device_id,
+                        batch=result.processed_samples,
+                    )
+                    count = await self._repo.insert_samples(session, insert_payload)
+                    logger.info("Stored %d samples for device %s", count, payload.device_id)
+
+                # Store anomalies
+                for sample, anomaly in result.anomalies:
+                    await session.execute(
+                        text("""
+                            INSERT INTO anomalies (time, device_id, metric, value, reason, severity, context)
+                            VALUES (:time, :device_id, :metric, :value, :reason, :severity, :context::jsonb)
+                        """),
+                        {
+                            "time": sample.timestamp,
+                            "device_id": payload.device_id,
+                            "metric": sample.metric,
+                            "value": sample.value,
+                            "reason": anomaly.reason,
+                            "severity": anomaly.severity,
+                            "context": json.dumps(anomaly.context),
+                        },
+                    )
+                if result.anomalies:
+                    await session.commit()
+                    logger.info(
+                        "Flagged %d anomalies for device %s",
+                        len(result.anomalies),
+                        payload.device_id,
+                    )
+        except Exception:
+            logger.exception("Failed to process data for device %s", payload.device_id)
+            raise
