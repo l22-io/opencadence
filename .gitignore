@@ -112,6 +112,7 @@ AGENTS.md
 
 # LLM context/memory/planning files
 docs/superpowers/
+docs/handover.md
 
 # Docker volumes
 data/
