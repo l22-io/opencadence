@@ -25,6 +25,8 @@ from src.metrics.router import create_metrics_router
 from src.storage.database import create_engine
 from src.storage.repository import SampleRepository
 from src.storage.service import StorageService
+from src.streaming.broadcaster import WebSocketBroadcaster
+from src.streaming.router import create_stream_router
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +58,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     storage_service = StorageService(
         session_factory=session_factory, registry=registry
     )
+    broadcaster = WebSocketBroadcaster()
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
@@ -64,9 +67,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             await storage_service.handle_data_received(event.payload)
 
         event_bus.subscribe(DataReceived, on_data_received)
+        event_bus.subscribe(DataReceived, broadcaster.handle_data_received)
         await event_bus.start()
         logger.info("OpenCadence started with %d metrics", len(registry.list_metrics()))
         yield
+        await broadcaster.stop()
         await event_bus.stop()
         await redis.aclose()
         logger.info("OpenCadence stopped")
@@ -102,6 +107,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         jwt_algorithm=settings.jwt_algorithm,
     ))
 
+    app.include_router(create_stream_router(
+        broadcaster=broadcaster,
+        session_factory=session_factory,
+        repo=repo,
+        registry=registry,
+        jwt_secret=settings.jwt_secret,
+        jwt_algorithm=settings.jwt_algorithm,
+    ))
+
     app.include_router(create_metrics_router(
         engine=engine.sync_engine,
         redis=redis,
@@ -114,6 +128,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.engine = engine
     app.state.redis = redis
     app.state.event_bus = event_bus
+    app.state.broadcaster = broadcaster
 
     @app.get("/health")
     async def health() -> dict[str, str]:
