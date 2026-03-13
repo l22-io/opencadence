@@ -101,3 +101,34 @@ class SampleRepository:
         """)
         result = await session.execute(stmt, {"device_ids": device_ids})
         return [dict(row._mapping) for row in result]
+
+    async def query_anomalies(
+        self,
+        session: AsyncSession,
+        device_id: UUID,
+        start: datetime,
+        end: datetime,
+        metric: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[dict[str, Any]]:
+        where = "device_id = :device_id AND time >= :start AND time < :end"
+        params: dict[str, Any] = {
+            "device_id": device_id,
+            "start": start,
+            "end": end,
+            "limit": limit,
+            "offset": offset,
+        }
+        if metric is not None:
+            where += " AND metric = :metric"
+            params["metric"] = metric
+        stmt = text(f"""
+            SELECT time, device_id, metric, value, reason, severity, context
+            FROM anomalies
+            WHERE {where}
+            ORDER BY time DESC
+            LIMIT :limit OFFSET :offset
+        """)  # noqa: S608 -- where clause built from hardcoded literals
+        result = await session.execute(stmt, params)
+        return [dict(row._mapping) for row in result]
