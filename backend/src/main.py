@@ -4,6 +4,8 @@ from collections.abc import AsyncGenerator
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
+from sqlalchemy import text
 
 from redis.asyncio import Redis
 
@@ -85,8 +87,25 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         jwt_secret=settings.jwt_secret, jwt_algorithm=settings.jwt_algorithm,
     ))
 
+    # Store session_factory on app state for probe access
+    app.state.session_factory = session_factory
+
     @app.get("/health")
     async def health() -> dict[str, str]:
         return {"status": "ok"}
+
+    @app.get("/live")
+    async def liveness() -> dict[str, str]:
+        return {"status": "ok"}
+
+    @app.get("/ready")
+    async def readiness() -> JSONResponse:
+        try:
+            async with app.state.session_factory() as session:
+                await session.execute(text("SELECT 1"))
+            return JSONResponse({"status": "ok"})
+        except Exception:
+            logger.warning("Readiness check failed", exc_info=True)
+            return JSONResponse({"status": "unavailable"}, status_code=503)
 
     return app
