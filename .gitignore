@@ -114,6 +114,9 @@ AGENTS.md
 docs/superpowers/
 docs/handover.md
 
+# Worktrees
+.worktrees/
+
 # Docker volumes
 data/
 pgdata/
