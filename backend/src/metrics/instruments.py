@@ -43,6 +43,18 @@ RATE_LIMIT_REJECTIONS = Counter(
     "Requests rejected by rate limiter",
 )
 
+# --- WebSocket metrics (set by streaming broadcaster) ---
+
+WS_CONNECTIONS_ACTIVE = Gauge(
+    "oc_ws_connections_active",
+    "Currently active WebSocket connections",
+)
+
+WS_MESSAGES_SENT = Counter(
+    "oc_ws_messages_sent_total",
+    "Messages pushed to WebSocket clients",
+)
+
 # --- Infrastructure metrics (set on scrape) ---
 
 EVENT_BUS_QUEUE_DEPTH = Gauge(

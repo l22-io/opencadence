@@ -1,6 +1,10 @@
+import asyncio
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
-from src.streaming.broadcaster import SubscriptionFilter
+import pytest
+
+from src.streaming.broadcaster import SubscriptionFilter, WebSocketBroadcaster
 
 
 def test_empty_filter_matches_nothing():
@@ -80,3 +84,97 @@ def test_metrics_for_device_all():
     device_id = uuid4()
     f.add(device_id, metrics=None)
     assert f.metrics_for(device_id) is None
+
+
+# --- WebSocketBroadcaster tests ---
+
+
+@pytest.fixture
+def broadcaster():
+    return WebSocketBroadcaster()
+
+
+def _mock_ws():
+    ws = AsyncMock(spec=["send_json", "close"])
+    ws.send_json = AsyncMock()
+    ws.close = AsyncMock()
+    return ws
+
+
+@pytest.mark.asyncio
+async def test_register_and_unregister(broadcaster):
+    ws = _mock_ws()
+    filter_ = SubscriptionFilter()
+    broadcaster.register(ws, filter_)
+    assert broadcaster.connection_count == 1
+    broadcaster.unregister(ws)
+    assert broadcaster.connection_count == 0
+
+
+@pytest.mark.asyncio
+async def test_broadcast_sends_to_matching_client(broadcaster):
+    ws = _mock_ws()
+    device_id = uuid4()
+    filter_ = SubscriptionFilter()
+    filter_.add(device_id, metrics={"heart_rate"})
+    broadcaster.register(ws, filter_)
+
+    await broadcaster.broadcast(device_id, "heart_rate", {
+        "device_id": str(device_id), "metric": "heart_rate",
+        "time": "2026-03-13T12:00:00Z", "value": 72.0,
+        "unit": "bpm", "source": "healthkit",
+    })
+
+    ws.send_json.assert_called_once()
+    msg = ws.send_json.call_args[0][0]
+    assert msg["type"] == "sample"
+    assert msg["data"]["value"] == 72.0
+
+
+@pytest.mark.asyncio
+async def test_broadcast_skips_non_matching_client(broadcaster):
+    ws = _mock_ws()
+    device_id = uuid4()
+    filter_ = SubscriptionFilter()
+    filter_.add(device_id, metrics={"spo2"})
+    broadcaster.register(ws, filter_)
+
+    await broadcaster.broadcast(device_id, "heart_rate", {
+        "device_id": str(device_id), "metric": "heart_rate",
+        "time": "2026-03-13T12:00:00Z", "value": 72.0,
+        "unit": "bpm", "source": "healthkit",
+    })
+
+    ws.send_json.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_broadcast_disconnects_slow_client(broadcaster):
+    ws = _mock_ws()
+    ws.send_json = AsyncMock(side_effect=asyncio.TimeoutError)
+    device_id = uuid4()
+    filter_ = SubscriptionFilter()
+    filter_.add(device_id, metrics=None)
+    broadcaster.register(ws, filter_)
+
+    await broadcaster.broadcast(device_id, "heart_rate", {
+        "device_id": str(device_id), "metric": "heart_rate",
+        "time": "2026-03-13T12:00:00Z", "value": 72.0,
+        "unit": "bpm", "source": "healthkit",
+    })
+
+    ws.close.assert_called_once()
+    assert broadcaster.connection_count == 0
+
+
+@pytest.mark.asyncio
+async def test_stop_closes_all_connections(broadcaster):
+    ws1, ws2 = _mock_ws(), _mock_ws()
+    broadcaster.register(ws1, SubscriptionFilter())
+    broadcaster.register(ws2, SubscriptionFilter())
+
+    await broadcaster.stop()
+
+    ws1.close.assert_called_once_with(code=1001, reason="Server shutting down")
+    ws2.close.assert_called_once_with(code=1001, reason="Server shutting down")
+    assert broadcaster.connection_count == 0

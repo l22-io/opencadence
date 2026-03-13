@@ -1,11 +1,17 @@
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import logging
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
+from src.metrics.instruments import WS_CONNECTIONS_ACTIVE, WS_MESSAGES_SENT
+
 if TYPE_CHECKING:
     from uuid import UUID
+
+    from fastapi import WebSocket
 
 logger = logging.getLogger(__name__)
 
@@ -53,3 +59,58 @@ class SubscriptionFilter:
 
     def metrics_for(self, device_id: UUID) -> set[str] | None:
         return self._subscriptions.get(device_id)
+
+
+SEND_TIMEOUT = 5.0
+
+
+class WebSocketBroadcaster:
+    """Manages WebSocket clients and broadcasts DataReceived events."""
+
+    def __init__(self) -> None:
+        self._clients: dict[WebSocket, SubscriptionFilter] = {}
+
+    @property
+    def connection_count(self) -> int:
+        return len(self._clients)
+
+    def register(self, ws: WebSocket, filter_: SubscriptionFilter) -> None:
+        self._clients[ws] = filter_
+        WS_CONNECTIONS_ACTIVE.inc()
+
+    def unregister(self, ws: WebSocket) -> None:
+        if ws in self._clients:
+            del self._clients[ws]
+            WS_CONNECTIONS_ACTIVE.dec()
+
+    def get_filter(self, ws: WebSocket) -> SubscriptionFilter | None:
+        return self._clients.get(ws)
+
+    async def broadcast(
+        self, device_id: UUID, metric: str, data: dict,
+    ) -> None:
+        disconnected: list[WebSocket] = []
+        for ws, filter_ in self._clients.items():
+            if not filter_.matches(device_id, metric):
+                continue
+            try:
+                await asyncio.wait_for(
+                    ws.send_json({"type": "sample", "data": data}),
+                    timeout=SEND_TIMEOUT,
+                )
+                WS_MESSAGES_SENT.inc()
+            except Exception:
+                logger.warning("Disconnecting slow/broken WebSocket client")
+                disconnected.append(ws)
+
+        for ws in disconnected:
+            self.unregister(ws)
+            with contextlib.suppress(Exception):
+                await ws.close(code=1008, reason="Send timeout")
+
+    async def stop(self) -> None:
+        for ws in list(self._clients):
+            with contextlib.suppress(Exception):
+                await ws.close(code=1001, reason="Server shutting down")
+        self._clients.clear()
+        WS_CONNECTIONS_ACTIVE.set(0)
