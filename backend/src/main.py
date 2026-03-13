@@ -9,6 +9,8 @@ from redis.asyncio import Redis
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
+from src.api.anomalies import create_anomalies_router
+from src.api.devices import create_devices_router
 from src.api.router import create_api_router
 from src.core.config import Settings
 from src.core.events import InProcessEventBus
@@ -88,6 +90,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(create_fhir_router(
         session_factory=session_factory, repo=repo, registry=registry,
         jwt_secret=settings.jwt_secret, jwt_algorithm=settings.jwt_algorithm,
+    ))
+    app.include_router(create_devices_router(
+        session_factory=session_factory,
+        jwt_secret=settings.jwt_secret,
+        jwt_algorithm=settings.jwt_algorithm,
+    ))
+    app.include_router(create_anomalies_router(
+        session_factory=session_factory,
+        jwt_secret=settings.jwt_secret,
+        jwt_algorithm=settings.jwt_algorithm,
     ))
 
     app.include_router(create_metrics_router(
