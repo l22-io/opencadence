@@ -5,9 +5,12 @@ from pathlib import Path
 
 from fastapi import FastAPI
 
+from redis.asyncio import Redis
+
 from src.core.config import Settings
 from src.core.events import InProcessEventBus
 from src.core.logging import setup_logging
+from src.core.rate_limiter import RateLimiter
 from src.core.registry import MetricRegistry
 from src.ingestion.router import DataReceived, create_ingest_router
 from src.ingestion.service import IngestionService
@@ -35,6 +38,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     session_factory = create_session_factory(settings)
     repo = SampleRepository()
 
+    # Rate limiting
+    redis = Redis.from_url(settings.redis_url)
+    rate_limiter = RateLimiter(
+        redis=redis, max_requests=settings.api_rate_limit, window_seconds=60
+    )
+
     # Services
     ingestion_service = IngestionService(registry=registry)
     storage_service = StorageService(
@@ -52,6 +61,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         logger.info("OpenCadence started with %d metrics", len(registry.list_metrics()))
         yield
         await event_bus.stop()
+        await redis.aclose()
         logger.info("OpenCadence stopped")
 
     app = FastAPI(
@@ -62,7 +72,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
 
     # Mount routers
-    app.include_router(create_ingest_router(service=ingestion_service, event_bus=event_bus, session_factory=session_factory))
+    app.include_router(create_ingest_router(
+        service=ingestion_service, event_bus=event_bus,
+        session_factory=session_factory, rate_limiter=rate_limiter,
+    ))
     app.include_router(create_api_router(
         session_factory=session_factory, repo=repo,
         jwt_secret=settings.jwt_secret, jwt_algorithm=settings.jwt_algorithm,

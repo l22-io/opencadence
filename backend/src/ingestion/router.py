@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from src.core.dependencies import require_api_key
 from src.core.events import Event, EventBus
 from src.core.models import IngestPayload
+from src.core.rate_limiter import RateLimiter
 from src.ingestion.service import IngestionService
 from src.storage.models import Device
 
@@ -29,6 +30,7 @@ def create_ingest_router(
     service: IngestionService,
     event_bus: EventBus,
     session_factory: async_sessionmaker[AsyncSession] | None = None,
+    rate_limiter: RateLimiter | None = None,
 ) -> APIRouter:
     router = APIRouter(prefix="/api/v1", tags=["ingestion"])
 
@@ -49,6 +51,18 @@ def create_ingest_router(
             raise HTTPException(
                 status_code=403, detail="Device ID does not match API key"
             )
+
+        if rate_limiter is not None:
+            allowed, remaining, reset = await rate_limiter.check(device.id)
+            if not allowed:
+                raise HTTPException(
+                    status_code=429,
+                    detail="Rate limit exceeded",
+                    headers={
+                        "Retry-After": str(reset),
+                        "X-RateLimit-Remaining": "0",
+                    },
+                )
 
         errors = service.validate(payload)
         if errors:

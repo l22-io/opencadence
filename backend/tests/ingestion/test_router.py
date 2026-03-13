@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 
 from src.core.auth import generate_api_key, hash_api_key
 from src.core.events import InProcessEventBus
+from src.core.rate_limiter import RateLimiter
 from src.core.registry import MetricRegistry
 from src.ingestion.router import create_ingest_router
 from src.ingestion.service import IngestionService
@@ -140,3 +141,36 @@ def test_ingest_unknown_metric(client: TestClient, device_and_key) -> None:
     )
     assert response.status_code == 422
     assert "errors" in response.json()["detail"]
+
+
+def _make_rate_limited_client(registry, mock_session_factory, mock_redis):
+    """Create a test client with a rate limiter."""
+    app = FastAPI()
+    bus = InProcessEventBus(max_queue_depth=100)
+    service = IngestionService(registry=registry)
+    limiter = RateLimiter(redis=mock_redis, max_requests=2, window_seconds=60)
+    app.include_router(
+        create_ingest_router(
+            service=service, event_bus=bus,
+            session_factory=mock_session_factory, rate_limiter=limiter,
+        )
+    )
+    return TestClient(app)
+
+
+def test_ingest_rate_limited(
+    registry: MetricRegistry, mock_session_factory, device_and_key,
+) -> None:
+    device, raw_key = device_and_key
+    mock_redis = AsyncMock()
+    mock_redis.incr = AsyncMock(return_value=3)  # over limit of 2
+    mock_redis.ttl = AsyncMock(return_value=45)
+
+    client = _make_rate_limited_client(registry, mock_session_factory, mock_redis)
+    response = client.post(
+        "/api/v1/ingest",
+        json=_payload(str(device.id)),
+        headers={"X-API-Key": raw_key},
+    )
+    assert response.status_code == 429
+    assert response.json()["detail"] == "Rate limit exceeded"
