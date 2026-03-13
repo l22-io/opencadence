@@ -65,3 +65,26 @@ def test_process_flags_anomalies(service: ProcessingService) -> None:
     result = service.process(device_id, payload.batch)
     assert len(result.processed_samples) == 1
     assert len(result.anomalies) == 1
+
+
+from src.metrics.instruments import ANOMALIES_FLAGGED
+
+
+def _anomaly_counter_value(metric_type, validator):
+    try:
+        return ANOMALIES_FLAGGED.labels(
+            metric_type=metric_type, validator=validator
+        )._value.get()
+    except KeyError:
+        return 0.0
+
+
+def test_process_increments_anomaly_counter(service: ProcessingService) -> None:
+    before = _anomaly_counter_value("heart_rate", "RangeValidator")
+    sample = Sample(
+        metric="heart_rate", value=350.0, unit="bpm",
+        timestamp=datetime.now(UTC), source="test",
+    )
+    service.process(uuid4(), [sample])
+    after = _anomaly_counter_value("heart_rate", "RangeValidator")
+    assert after - before == 1

@@ -5,6 +5,7 @@ from uuid import UUID
 from src.core.models import Sample
 from src.core.registry import MetricRegistry
 from src.processing.base import AnomalyFlag, BaseProcessor, ProcessingContext
+from src.metrics.instruments import ANOMALIES_FLAGGED
 from src.processing.validators import RangeValidator
 
 logger = logging.getLogger(__name__)
@@ -61,6 +62,12 @@ class ProcessingService:
             processed.append(current)
             for anomaly in ctx.anomalies:
                 all_anomalies.append((sample, anomaly))
+            if ctx.anomalies:
+                for proc in processors:
+                    ANOMALIES_FLAGGED.labels(
+                        metric_type=sample.metric,
+                        validator=type(proc).__name__,
+                    ).inc(len(ctx.anomalies))
 
         return ProcessingResult(
             processed_samples=processed, anomalies=all_anomalies
