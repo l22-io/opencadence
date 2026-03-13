@@ -6,6 +6,7 @@ import pytest
 
 from src.core.models import IngestPayload, Sample
 from src.core.registry import MetricRegistry
+from src.metrics.instruments import ANOMALIES_FLAGGED
 from src.processing.service import ProcessingService
 
 
@@ -65,9 +66,6 @@ def test_process_flags_anomalies(service: ProcessingService) -> None:
     result = service.process(device_id, payload.batch)
     assert len(result.processed_samples) == 1
     assert len(result.anomalies) == 1
-
-
-from src.metrics.instruments import ANOMALIES_FLAGGED
 
 
 def _anomaly_counter_value(metric_type, validator):

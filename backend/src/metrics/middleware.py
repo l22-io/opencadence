@@ -1,4 +1,6 @@
 import time
+from collections.abc import Callable
+from typing import Any
 
 from src.metrics.instruments import (
     HTTP_IN_FLIGHT,
@@ -6,23 +8,28 @@ from src.metrics.instruments import (
     HTTP_REQUESTS_TOTAL,
 )
 
+Scope = dict[str, Any]
+Receive = Callable[..., Any]
+Send = Callable[..., Any]
+ASGIApp = Callable[..., Any]
+
 
 class PrometheusMiddleware:
     """ASGI middleware that records HTTP request metrics."""
 
-    def __init__(self, app):
+    def __init__(self, app: ASGIApp) -> None:
         self.app = app
 
-    async def __call__(self, scope, receive, send):
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
 
-        method = scope["method"]
+        method: str = scope["method"]
         path = scope["path"].rstrip("/") or "/"
         status_code = 500  # default if response never completes
 
-        async def send_wrapper(message):
+        async def send_wrapper(message: dict[str, Any]) -> None:
             nonlocal status_code
             if message["type"] == "http.response.start":
                 status_code = message["status"]

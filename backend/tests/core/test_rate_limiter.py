@@ -1,10 +1,10 @@
-import time
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
 
 from src.core.rate_limiter import RateLimiter
+from src.metrics.instruments import RATE_LIMIT_REJECTIONS
 
 
 @pytest.fixture
@@ -76,9 +76,6 @@ async def test_returns_ttl_as_reset(limiter, mock_redis):
     mock_redis.ttl.return_value = 42
     _, _, reset = await limiter.check(uuid4())
     assert reset == 42
-
-
-from src.metrics.instruments import RATE_LIMIT_REJECTIONS
 
 
 def _rejection_counter_value():

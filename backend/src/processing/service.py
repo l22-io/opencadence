@@ -4,8 +4,8 @@ from uuid import UUID
 
 from src.core.models import Sample
 from src.core.registry import MetricRegistry
-from src.processing.base import AnomalyFlag, BaseProcessor, ProcessingContext
 from src.metrics.instruments import ANOMALIES_FLAGGED
+from src.processing.base import AnomalyFlag, BaseProcessor, ProcessingContext
 from src.processing.validators import RangeValidator
 
 logger = logging.getLogger(__name__)

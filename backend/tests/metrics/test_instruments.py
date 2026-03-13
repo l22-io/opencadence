@@ -7,7 +7,6 @@ from src.metrics.instruments import (
     DB_POOL_CHECKED_OUT,
     DB_POOL_SIZE,
     EVENT_BUS_QUEUE_DEPTH,
-    HTTP_REQUESTS_TOTAL,
     RATE_LIMIT_REJECTIONS,
     REDIS_CONNECTED,
     SAMPLES_INGESTED,

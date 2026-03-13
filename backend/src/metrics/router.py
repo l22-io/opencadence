@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import APIRouter, Header, HTTPException, Response
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
@@ -5,9 +7,9 @@ from src.metrics.instruments import collect_infra_metrics
 
 
 def create_metrics_router(
-    engine,
-    redis,
-    event_bus,
+    engine: Any,
+    redis: Any,
+    event_bus: Any,
     metrics_token: str | None = None,
 ) -> APIRouter:
     router = APIRouter(tags=["metrics"])

@@ -1,5 +1,4 @@
 import logging
-from contextlib import asynccontextmanager
 from dataclasses import dataclass
 
 from fastapi import APIRouter, Depends, Header, HTTPException
@@ -10,8 +9,8 @@ from src.core.dependencies import require_api_key
 from src.core.events import Event, EventBus
 from src.core.models import IngestPayload
 from src.core.rate_limiter import RateLimiter
-from src.metrics.instruments import SAMPLES_INGESTED
 from src.ingestion.service import IngestionService
+from src.metrics.instruments import SAMPLES_INGESTED
 from src.storage.models import Device
 
 logger = logging.getLogger(__name__)

@@ -14,6 +14,7 @@ from src.core.rate_limiter import RateLimiter
 from src.core.registry import MetricRegistry
 from src.ingestion.router import create_ingest_router
 from src.ingestion.service import IngestionService
+from src.metrics.instruments import SAMPLES_INGESTED
 from src.storage.models import Device
 
 
@@ -174,9 +175,6 @@ def test_ingest_rate_limited(
     )
     assert response.status_code == 429
     assert response.json()["detail"] == "Rate limit exceeded"
-
-
-from src.metrics.instruments import SAMPLES_INGESTED
 
 
 def _ingested_counter_value(metric_type):

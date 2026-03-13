@@ -1,24 +1,23 @@
 import logging
-from contextlib import asynccontextmanager
 from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+from redis.asyncio import Redis
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from redis.asyncio import Redis
-
+from src.api.router import create_api_router
 from src.core.config import Settings
 from src.core.events import InProcessEventBus
 from src.core.logging import setup_logging
 from src.core.rate_limiter import RateLimiter
 from src.core.registry import MetricRegistry
+from src.fhir.router import create_fhir_router
 from src.ingestion.router import DataReceived, create_ingest_router
 from src.ingestion.service import IngestionService
-from src.api.router import create_api_router
-from src.fhir.router import create_fhir_router
 from src.metrics.middleware import PrometheusMiddleware
 from src.metrics.router import create_metrics_router
 from src.storage.database import create_engine

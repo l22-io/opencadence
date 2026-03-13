@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 from prometheus_client import Counter, Gauge, Histogram
 
@@ -65,7 +66,7 @@ REDIS_CONNECTED = Gauge(
 )
 
 
-async def collect_infra_metrics(engine, redis, event_bus) -> None:
+async def collect_infra_metrics(engine: Any, redis: Any, event_bus: Any) -> None:
     """Collect infrastructure metrics on demand (called per scrape)."""
     # DB pool
     pool = engine.pool
