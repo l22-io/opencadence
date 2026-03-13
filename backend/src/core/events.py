@@ -35,6 +35,10 @@ class InProcessEventBus:
         self._task: asyncio.Task[None] | None = None
         self._running = False
 
+    @property
+    def queue_depth(self) -> int:
+        return self._queue.qsize()
+
     def subscribe(self, event_type: type[Event], handler: EventHandler) -> None:
         self._handlers[event_type].append(handler)
 

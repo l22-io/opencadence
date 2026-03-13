@@ -74,3 +74,8 @@ async def test_queue_depth_exceeded(bus: InProcessEventBus) -> None:
     assert result is False
 
     await small_bus.stop()
+
+
+def test_queue_depth_reports_size():
+    bus = InProcessEventBus(max_queue_depth=100)
+    assert bus.queue_depth == 0
