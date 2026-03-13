@@ -174,3 +174,25 @@ def test_ingest_rate_limited(
     )
     assert response.status_code == 429
     assert response.json()["detail"] == "Rate limit exceeded"
+
+
+from src.metrics.instruments import SAMPLES_INGESTED
+
+
+def _ingested_counter_value(metric_type):
+    try:
+        return SAMPLES_INGESTED.labels(metric_type=metric_type)._value.get()
+    except KeyError:
+        return 0.0
+
+
+def test_ingest_increments_samples_counter(client: TestClient, device_and_key) -> None:
+    device, raw_key = device_and_key
+    before = _ingested_counter_value("heart_rate")
+    client.post(
+        "/api/v1/ingest",
+        json=_payload(str(device.id)),
+        headers={"X-API-Key": raw_key},
+    )
+    after = _ingested_counter_value("heart_rate")
+    assert after - before == 1

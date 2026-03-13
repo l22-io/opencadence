@@ -10,6 +10,7 @@ from src.core.dependencies import require_api_key
 from src.core.events import Event, EventBus
 from src.core.models import IngestPayload
 from src.core.rate_limiter import RateLimiter
+from src.metrics.instruments import SAMPLES_INGESTED
 from src.ingestion.service import IngestionService
 from src.storage.models import Device
 
@@ -71,6 +72,9 @@ def create_ingest_router(
         published = await event_bus.publish(DataReceived(payload=payload))
         if not published:
             raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+
+        for sample in payload.batch:
+            SAMPLES_INGESTED.labels(metric_type=sample.metric).inc()
 
         logger.info(
             "Accepted %d samples from device %s",
