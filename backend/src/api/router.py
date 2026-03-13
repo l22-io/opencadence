@@ -6,7 +6,6 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from src.api.schemas import (
     AggregatedSample,
-    AnomalyResponse,
     DataQueryResponse,
     RawSample,
 )
