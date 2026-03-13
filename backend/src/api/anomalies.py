@@ -12,7 +12,7 @@ from src.core.dependencies import JWTClaims, require_jwt
 
 def create_anomalies_router(
     session_factory: async_sessionmaker[AsyncSession],
-    jwt_secret: str,
+    jwt_secret: str | None = None,
     jwt_algorithm: str = "HS256",
 ) -> APIRouter:
     router = APIRouter(prefix="/api/v1", tags=["anomalies"])
@@ -20,6 +20,8 @@ def create_anomalies_router(
     async def get_jwt_claims(
         authorization: str | None = Header(None),
     ) -> JWTClaims:
+        if jwt_secret is None:
+            raise HTTPException(status_code=500, detail="Auth not configured")
         return await require_jwt(
             secret=jwt_secret,
             algorithm=jwt_algorithm,
