@@ -87,3 +87,17 @@ class SampleRepository:
             {"device_id": device_id, "metric": metric, "start": start, "end": end},
         )
         return [dict(row._mapping) for row in result]
+
+    async def query_devices(
+        self,
+        session: AsyncSession,
+        device_ids: list[UUID],
+    ) -> list[dict[str, Any]]:
+        stmt = text("""
+            SELECT id, name, source_type, created_at, revoked_at
+            FROM devices
+            WHERE id = ANY(:device_ids)
+            ORDER BY created_at ASC
+        """)
+        result = await session.execute(stmt, {"device_ids": device_ids})
+        return [dict(row._mapping) for row in result]
