@@ -76,3 +76,28 @@ async def test_returns_ttl_as_reset(limiter, mock_redis):
     mock_redis.ttl.return_value = 42
     _, _, reset = await limiter.check(uuid4())
     assert reset == 42
+
+
+from src.metrics.instruments import RATE_LIMIT_REJECTIONS
+
+
+def _rejection_counter_value():
+    return RATE_LIMIT_REJECTIONS._value.get()
+
+
+@pytest.mark.asyncio
+async def test_increments_rejection_counter_on_deny(limiter, mock_redis):
+    mock_redis.incr.return_value = 6  # over limit of 5
+    before = _rejection_counter_value()
+    await limiter.check(uuid4())
+    after = _rejection_counter_value()
+    assert after - before == 1
+
+
+@pytest.mark.asyncio
+async def test_no_rejection_counter_on_allow(limiter, mock_redis):
+    mock_redis.incr.return_value = 1  # under limit
+    before = _rejection_counter_value()
+    await limiter.check(uuid4())
+    after = _rejection_counter_value()
+    assert after - before == 0

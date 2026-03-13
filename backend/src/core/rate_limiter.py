@@ -3,6 +3,8 @@ from uuid import UUID
 
 from redis.asyncio import Redis
 
+from src.metrics.instruments import RATE_LIMIT_REJECTIONS
+
 
 class RateLimiter:
     """Fixed-window rate limiter backed by Redis.
@@ -32,4 +34,8 @@ class RateLimiter:
         remaining = max(0, self.max_requests - count)
         ttl = await self.redis.ttl(key)
 
-        return count <= self.max_requests, remaining, max(ttl, 0)
+        allowed = count <= self.max_requests
+        if not allowed:
+            RATE_LIMIT_REJECTIONS.inc()
+
+        return allowed, remaining, max(ttl, 0)
