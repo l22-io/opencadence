@@ -1,4 +1,5 @@
 import logging
+from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -77,6 +78,7 @@ def create_stream_router(
     ) -> None:
         raw_ids = msg.get("device_ids", [])
         metrics_list = msg.get("metrics")
+        since_str = msg.get("since")
 
         # Validate device IDs
         device_ids: list[UUID] = []
@@ -106,6 +108,33 @@ def create_stream_router(
         # Apply subscription
         for did in device_ids:
             filter_.add(did, metrics)
+
+        # Backfill if since provided
+        if since_str and session_factory is not None:
+            since = datetime.fromisoformat(since_str)
+            now = datetime.now(UTC)
+            query_metrics = list(metrics) if metrics else registry.list_metrics()
+
+            async with session_factory() as session:
+                for did in device_ids:
+                    for metric_name in query_metrics:
+                        rows = await repo.query_raw(
+                            session, did, metric_name, start=since, end=now, limit=1000,
+                        )
+                        for row in rows:
+                            await ws.send_json({
+                                "type": "backfill",
+                                "data": {
+                                    "device_id": str(did),
+                                    "metric": metric_name,
+                                    "time": row["time"].isoformat(),
+                                    "value": row["value"],
+                                    "unit": row["unit"],
+                                    "source": row["source"],
+                                },
+                            })
+
+            await ws.send_json({"type": "backfill_complete"})
 
         await ws.send_json({
             "type": "subscribed",

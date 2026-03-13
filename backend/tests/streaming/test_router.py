@@ -1,4 +1,7 @@
+from contextlib import asynccontextmanager
+from datetime import UTC, datetime
 from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
@@ -122,3 +125,62 @@ def test_ws_unsubscribe(client):
         })
         response = ws.receive_json()
         assert response["type"] == "unsubscribed"
+
+
+def _make_backfill_client(broadcaster, registry):
+    """Client with a mock session_factory that returns backfill rows."""
+    mock_session = AsyncMock()
+    mock_row = MagicMock()
+    # MagicMock ignores underscore-prefixed kwargs in constructor, so set explicitly
+    mock_row._mapping = {
+        "time": datetime(2026, 3, 13, 10, 30, tzinfo=UTC),
+        "value": 68.0,
+        "unit": "bpm",
+        "source": "healthkit",
+    }
+    mock_session.execute.return_value = [mock_row]
+
+    @asynccontextmanager
+    async def session_factory():
+        yield mock_session
+
+    app = FastAPI()
+    repo = SampleRepository()
+    app.include_router(create_stream_router(
+        broadcaster=broadcaster,
+        session_factory=session_factory,
+        repo=repo,
+        registry=registry,
+        jwt_secret=JWT_SECRET,
+        jwt_algorithm="HS256",
+    ))
+    return TestClient(app)
+
+
+def test_ws_subscribe_with_since_sends_backfill(broadcaster, registry):
+    device_id = uuid4()
+    token = create_jwt_token([device_id], secret=JWT_SECRET)
+    client = _make_backfill_client(broadcaster, registry)
+
+    with client.websocket_connect(f"/api/v1/stream?token={token}") as ws:
+        ws.send_json({
+            "action": "subscribe",
+            "device_ids": [str(device_id)],
+            "metrics": ["heart_rate"],
+            "since": "2026-03-13T10:00:00Z",
+        })
+
+        # First: backfill data
+        msg = ws.receive_json()
+        assert msg["type"] == "backfill"
+        assert msg["data"]["value"] == 68.0
+        assert msg["data"]["device_id"] == str(device_id)
+        assert msg["data"]["metric"] == "heart_rate"
+
+        # Then: backfill_complete
+        msg = ws.receive_json()
+        assert msg["type"] == "backfill_complete"
+
+        # Then: subscribed ack
+        msg = ws.receive_json()
+        assert msg["type"] == "subscribed"
