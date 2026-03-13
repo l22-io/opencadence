@@ -1,9 +1,12 @@
 import asyncio
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
 
+from src.core.models import IngestPayload, Sample
+from src.ingestion.router import DataReceived
 from src.streaming.broadcaster import SubscriptionFilter, WebSocketBroadcaster
 
 
@@ -178,3 +181,31 @@ async def test_stop_closes_all_connections(broadcaster):
     ws1.close.assert_called_once_with(code=1001, reason="Server shutting down")
     ws2.close.assert_called_once_with(code=1001, reason="Server shutting down")
     assert broadcaster.connection_count == 0
+
+
+@pytest.mark.asyncio
+async def test_handle_data_received_broadcasts_samples(broadcaster):
+    ws = _mock_ws()
+    device_id = uuid4()
+    filter_ = SubscriptionFilter()
+    filter_.add(device_id, metrics={"heart_rate"})
+    broadcaster.register(ws, filter_)
+
+    payload = IngestPayload(
+        device_id=device_id,
+        batch=[
+            Sample(
+                metric="heart_rate", value=72.0, unit="bpm",
+                timestamp=datetime(2026, 3, 13, 12, 0, tzinfo=UTC),
+                source="healthkit",
+            ),
+        ],
+    )
+    event = DataReceived(payload=payload)
+    await broadcaster.handle_data_received(event)
+
+    assert ws.send_json.call_count == 1
+    msg = ws.send_json.call_args[0][0]
+    assert msg["type"] == "sample"
+    assert msg["data"]["metric"] == "heart_rate"
+    assert msg["data"]["device_id"] == str(device_id)

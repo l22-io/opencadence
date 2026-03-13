@@ -4,7 +4,7 @@ import asyncio
 import contextlib
 import logging
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from src.metrics.instruments import WS_CONNECTIONS_ACTIVE, WS_MESSAGES_SENT
 
@@ -107,6 +107,21 @@ class WebSocketBroadcaster:
             self.unregister(ws)
             with contextlib.suppress(Exception):
                 await ws.close(code=1008, reason="Send timeout")
+
+    async def handle_data_received(self, event: Any) -> None:
+        """Event bus handler for DataReceived events."""
+        payload = event.payload
+        device_id = payload.device_id
+        for sample in payload.batch:
+            data = {
+                "device_id": str(device_id),
+                "metric": sample.metric,
+                "time": sample.timestamp.isoformat(),
+                "value": sample.value,
+                "unit": sample.unit,
+                "source": sample.source,
+            }
+            await self.broadcast(device_id, sample.metric, data)
 
     async def stop(self) -> None:
         for ws in list(self._clients):
