@@ -6,6 +6,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from redis.asyncio import Redis
 
@@ -18,7 +19,9 @@ from src.ingestion.router import DataReceived, create_ingest_router
 from src.ingestion.service import IngestionService
 from src.api.router import create_api_router
 from src.fhir.router import create_fhir_router
-from src.storage.database import create_session_factory
+from src.metrics.middleware import PrometheusMiddleware
+from src.metrics.router import create_metrics_router
+from src.storage.database import create_engine
 from src.storage.repository import SampleRepository
 from src.storage.service import StorageService
 
@@ -36,8 +39,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     registry = MetricRegistry.from_directory(metrics_path)
     event_bus = InProcessEventBus(max_queue_depth=settings.event_bus_queue_depth)
 
-    # Database
-    session_factory = create_session_factory(settings)
+    # Database -- create engine directly to retain reference for metrics
+    engine = create_engine(settings)
+    session_factory = async_sessionmaker(engine, expire_on_commit=False)
     repo = SampleRepository()
 
     # Rate limiting
@@ -87,8 +91,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         jwt_secret=settings.jwt_secret, jwt_algorithm=settings.jwt_algorithm,
     ))
 
-    # Store session_factory on app state for probe access
+    app.include_router(create_metrics_router(
+        engine=engine.sync_engine,
+        redis=redis,
+        event_bus=event_bus,
+        metrics_token=settings.metrics_token,
+    ))
+
+    # Store references for probes and metrics access
     app.state.session_factory = session_factory
+    app.state.engine = engine
+    app.state.redis = redis
+    app.state.event_bus = event_bus
 
     @app.get("/health")
     async def health() -> dict[str, str]:
@@ -107,5 +121,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         except Exception:
             logger.warning("Readiness check failed", exc_info=True)
             return JSONResponse({"status": "unavailable"}, status_code=503)
+
+    app.add_middleware(PrometheusMiddleware)
 
     return app
