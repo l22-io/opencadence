@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import logging
 from collections import defaultdict
 from dataclasses import dataclass
@@ -58,16 +59,14 @@ class InProcessEventBus:
         self._running = False
         if self._task:
             self._task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._task
-            except asyncio.CancelledError:
-                pass
 
     async def _process(self) -> None:
         while self._running:
             try:
                 event = await asyncio.wait_for(self._queue.get(), timeout=0.1)
-            except (asyncio.TimeoutError, TimeoutError):
+            except TimeoutError:
                 continue
 
             handlers = self._handlers.get(type(event), [])

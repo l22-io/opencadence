@@ -16,6 +16,7 @@ def bus() -> InProcessEventBus:
     return InProcessEventBus(max_queue_depth=100)
 
 
+@pytest.mark.asyncio
 async def test_publish_and_subscribe(bus: InProcessEventBus) -> None:
     received: list[SampleEvent] = []
 
@@ -34,6 +35,7 @@ async def test_publish_and_subscribe(bus: InProcessEventBus) -> None:
     await bus.stop()
 
 
+@pytest.mark.asyncio
 async def test_multiple_subscribers(bus: InProcessEventBus) -> None:
     counts = {"a": 0, "b": 0}
 
@@ -56,6 +58,7 @@ async def test_multiple_subscribers(bus: InProcessEventBus) -> None:
     await bus.stop()
 
 
+@pytest.mark.asyncio
 async def test_queue_depth_exceeded(bus: InProcessEventBus) -> None:
     """When queue is full, publish returns False."""
     small_bus = InProcessEventBus(max_queue_depth=2)

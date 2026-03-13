@@ -49,7 +49,12 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "UP", "S", "B", "A", "SIM", "TCH"]
-ignore = ["S101"]  # allow assert in tests
+ignore = [
+    "S101",  # allow assert in tests
+    "B008",  # Depends() in defaults is idiomatic FastAPI
+    "S104",  # 0.0.0.0 binding is expected for Docker containers
+    "S608",  # SQL view names from controlled dict, not user input
+]
 
 [tool.mypy]
 python_version = "3.12"

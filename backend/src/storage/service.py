@@ -1,16 +1,12 @@
 import json
 import logging
-from datetime import datetime
-from typing import Any
-from uuid import UUID
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from src.core.models import IngestPayload
 from src.core.registry import MetricRegistry
-from src.processing.base import AnomalyFlag
-from src.processing.service import ProcessingResult, ProcessingService
+from src.processing.service import ProcessingService
 from src.storage.repository import SampleRepository
 
 logger = logging.getLogger(__name__)
@@ -47,8 +43,10 @@ class StorageService:
                 for sample, anomaly in result.anomalies:
                     await session.execute(
                         text("""
-                            INSERT INTO anomalies (time, device_id, metric, value, reason, severity, context)
-                            VALUES (:time, :device_id, :metric, :value, :reason, :severity, :context::jsonb)
+                            INSERT INTO anomalies
+                            (time, device_id, metric, value, reason, severity, context)
+                            VALUES (:time, :device_id, :metric, :value,
+                                    :reason, :severity, :context::jsonb)
                         """),
                         {
                             "time": sample.timestamp,
