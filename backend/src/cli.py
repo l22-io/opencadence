@@ -222,5 +222,45 @@ async def _export(
         typer.echo(output.getvalue().rstrip())
 
 
+@app.command("health")
+def health() -> None:
+    """Check connectivity to backend services."""
+    asyncio.run(_health())
+
+
+async def _health() -> None:
+    settings = _get_settings()
+    statuses: dict[str, str] = {}
+
+    # DB check
+    try:
+        factory = _get_session_factory()
+        async with factory() as session:
+            await session.execute(text("SELECT 1"))
+        statuses["db"] = "ok"
+    except Exception as exc:
+        statuses["db"] = f"error: {exc}"
+
+    # Redis check
+    try:
+        redis = Redis.from_url(settings.redis_url)
+        await redis.ping()
+        await redis.aclose()
+        statuses["redis"] = "ok"
+    except Exception as exc:
+        statuses["redis"] = f"error: {exc}"
+
+    all_ok = all(v == "ok" for v in statuses.values())
+
+    if _json_output:
+        typer.echo(json_mod.dumps(statuses))
+    else:
+        typer.echo(f"DB:    {statuses['db']}")
+        typer.echo(f"Redis: {statuses['redis']}")
+
+    if not all_ok:
+        raise typer.Exit(code=1)
+
+
 if __name__ == "__main__":
     app()

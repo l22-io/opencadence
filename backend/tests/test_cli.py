@@ -242,3 +242,91 @@ def test_export_empty(mock_factory_fn, mock_repo):
         "--start", "2026-03-01", "--end", "2026-03-14",
     ])
     assert result.exit_code == 0
+
+
+@patch("src.cli.Redis")
+@patch("src.cli._get_settings")
+@patch("src.cli._get_session_factory")
+def test_health_all_ok(mock_factory_fn, mock_settings_fn, mock_redis_cls):
+    factory, session = _mock_factory()
+    mock_factory_fn.return_value = factory
+
+    mock_settings = MagicMock()
+    mock_settings.redis_url = "redis://localhost"
+    mock_settings_fn.return_value = mock_settings
+
+    mock_redis = AsyncMock()
+    mock_redis.ping = AsyncMock(return_value=True)
+    mock_redis.aclose = AsyncMock()
+    mock_redis_cls.from_url.return_value = mock_redis
+
+    result = runner.invoke(app, ["health"])
+    assert result.exit_code == 0
+    assert "ok" in result.stdout.lower()
+
+
+@patch("src.cli.Redis")
+@patch("src.cli._get_settings")
+@patch("src.cli._get_session_factory")
+def test_health_db_down(mock_factory_fn, mock_settings_fn, mock_redis_cls):
+    factory, session = _mock_factory()
+    mock_factory_fn.return_value = factory
+    session.execute.side_effect = Exception("connection refused")
+
+    mock_settings = MagicMock()
+    mock_settings.redis_url = "redis://localhost"
+    mock_settings_fn.return_value = mock_settings
+
+    mock_redis = AsyncMock()
+    mock_redis.ping = AsyncMock(return_value=True)
+    mock_redis.aclose = AsyncMock()
+    mock_redis_cls.from_url.return_value = mock_redis
+
+    result = runner.invoke(app, ["health"])
+    assert result.exit_code == 1
+    assert "connection refused" in result.stdout.lower()
+
+
+@patch("src.cli.Redis")
+@patch("src.cli._get_settings")
+@patch("src.cli._get_session_factory")
+def test_health_redis_down(mock_factory_fn, mock_settings_fn, mock_redis_cls):
+    factory, session = _mock_factory()
+    mock_factory_fn.return_value = factory
+
+    mock_settings = MagicMock()
+    mock_settings.redis_url = "redis://localhost"
+    mock_settings_fn.return_value = mock_settings
+
+    mock_redis = AsyncMock()
+    mock_redis.ping = AsyncMock(side_effect=ConnectionError("connection refused"))
+    mock_redis.aclose = AsyncMock()
+    mock_redis_cls.from_url.return_value = mock_redis
+
+    result = runner.invoke(app, ["health"])
+    assert result.exit_code == 1
+    assert "ok" in result.stdout.lower()  # DB is ok
+    assert "connection refused" in result.stdout.lower()  # Redis is down
+
+
+@patch("src.cli.Redis")
+@patch("src.cli._get_settings")
+@patch("src.cli._get_session_factory")
+def test_health_json(mock_factory_fn, mock_settings_fn, mock_redis_cls):
+    factory, session = _mock_factory()
+    mock_factory_fn.return_value = factory
+
+    mock_settings = MagicMock()
+    mock_settings.redis_url = "redis://localhost"
+    mock_settings_fn.return_value = mock_settings
+
+    mock_redis = AsyncMock()
+    mock_redis.ping = AsyncMock(return_value=True)
+    mock_redis.aclose = AsyncMock()
+    mock_redis_cls.from_url.return_value = mock_redis
+
+    result = runner.invoke(app, ["--json", "health"])
+    assert result.exit_code == 0
+    data = json_mod.loads(result.stdout)
+    assert data["db"] == "ok"
+    assert data["redis"] == "ok"
