@@ -330,3 +330,48 @@ def test_health_json(mock_factory_fn, mock_settings_fn, mock_redis_cls):
     data = json_mod.loads(result.stdout)
     assert data["db"] == "ok"
     assert data["redis"] == "ok"
+
+
+def _mock_dl_row(id_=1, replayed=False):
+    now = datetime(2026, 3, 14, 10, 0, tzinfo=UTC)
+    row = MagicMock()
+    row._mapping = {
+        "id": id_,
+        "event_type": "DataReceived",
+        "error": "ValueError: bad data",
+        "module": "storage",
+        "created_at": now,
+        "replayed_at": now if replayed else None,
+    }
+    return row
+
+
+@patch("src.cli._get_session_factory")
+def test_dead_letters_list(mock_factory_fn):
+    factory, session = _mock_factory()
+    mock_factory_fn.return_value = factory
+    rows = [_mock_dl_row(id_=1), _mock_dl_row(id_=2)]
+    result_mock = MagicMock()
+    result_mock.__iter__ = MagicMock(return_value=iter(rows))
+    session.execute.return_value = result_mock
+
+    result = runner.invoke(app, ["dead-letters", "list"])
+    assert result.exit_code == 0
+    assert "DataReceived" in result.stdout
+    assert "pending" in result.stdout.lower()
+
+
+@patch("src.cli._get_session_factory")
+def test_dead_letters_list_json(mock_factory_fn):
+    factory, session = _mock_factory()
+    mock_factory_fn.return_value = factory
+    rows = [_mock_dl_row(id_=1)]
+    result_mock = MagicMock()
+    result_mock.__iter__ = MagicMock(return_value=iter(rows))
+    session.execute.return_value = result_mock
+
+    result = runner.invoke(app, ["--json", "dead-letters", "list"])
+    assert result.exit_code == 0
+    data = json_mod.loads(result.stdout)
+    assert len(data) == 1
+    assert data[0]["event_type"] == "DataReceived"

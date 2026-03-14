@@ -222,6 +222,50 @@ async def _export(
         typer.echo(output.getvalue().rstrip())
 
 
+@dead_letters_app.command("list")
+def dl_list(
+    status: str = typer.Option("pending", help="Filter: pending, replayed, or all"),
+    limit: int = typer.Option(50, min=1, max=200, help="Max entries to return"),
+) -> None:
+    """List dead letter entries."""
+    asyncio.run(_dl_list(status, limit))
+
+
+async def _dl_list(status: str, limit: int) -> None:
+    factory = _get_session_factory()
+    where = "1=1"
+    if status == "pending":
+        where = "replayed_at IS NULL"
+    elif status == "replayed":
+        where = "replayed_at IS NOT NULL"
+
+    async with factory() as session:
+        result = await session.execute(
+            text(
+                f"SELECT id, event_type, error, module, created_at, replayed_at "  # noqa: S608
+                f"FROM dead_letter WHERE {where} "
+                f"ORDER BY created_at DESC LIMIT :limit"
+            ),
+            {"limit": limit},
+        )
+        rows = [dict(row._mapping) for row in result]
+
+    if _json_output:
+        typer.echo(json_mod.dumps(rows, default=str))
+    else:
+        if not rows:
+            typer.echo("No dead letters found.")
+            return
+        typer.echo(f"{'ID':<6}{'Event Type':<18}{'Error':<30}{'Created At':<28}{'Status'}")
+        for row in rows:
+            dl_status = "replayed" if row["replayed_at"] else "pending"
+            error_short = str(row["error"])[:28]
+            typer.echo(
+                f"{row['id']:<6}{row['event_type']:<18}{error_short:<30}"
+                f"{str(row['created_at']):<28}{dl_status}"
+            )
+
+
 @app.command("health")
 def health() -> None:
     """Check connectivity to backend services."""
