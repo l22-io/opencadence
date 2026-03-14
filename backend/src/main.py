@@ -17,6 +17,7 @@ from src.core.events import InProcessEventBus
 from src.core.logging import setup_logging
 from src.core.rate_limiter import RateLimiter
 from src.core.registry import MetricRegistry
+from src.deadletter.router import create_dead_letter_router
 from src.fhir.router import create_fhir_router
 from src.ingestion.router import DataReceived, create_ingest_router
 from src.ingestion.service import IngestionService
@@ -112,6 +113,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         session_factory=session_factory,
         repo=repo,
         registry=registry,
+        jwt_secret=settings.jwt_secret,
+        jwt_algorithm=settings.jwt_algorithm,
+    ))
+
+    app.include_router(create_dead_letter_router(
+        session_factory=session_factory,
+        event_bus=event_bus,
         jwt_secret=settings.jwt_secret,
         jwt_algorithm=settings.jwt_algorithm,
     ))
