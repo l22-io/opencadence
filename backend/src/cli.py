@@ -65,5 +65,42 @@ def _output(data: dict[str, Any] | list[dict[str, Any]], plain: str) -> None:
         typer.echo(plain)
 
 
+@keys_app.command("generate")
+def keys_generate(
+    name: str = typer.Argument(..., help="Device name"),
+    source_type: str = typer.Option("healthkit", help="Source type: healthkit or health-connect"),
+) -> None:
+    """Create a new device and API key."""
+    asyncio.run(_keys_generate(name, source_type))
+
+
+async def _keys_generate(name: str, source_type: str) -> None:
+    factory = _get_session_factory()
+    device_id = uuid4()
+    raw_key = generate_api_key(device_id)
+    key_hash = hash_api_key(raw_key)
+
+    async with factory() as session:
+        await session.execute(
+            text(
+                "INSERT INTO devices (id, name, api_key_hash, source_type) "
+                "VALUES (:id, :name, :hash, :source)"
+            ),
+            {"id": device_id, "name": name, "hash": key_hash, "source": source_type},
+        )
+        await session.commit()
+
+    _output(
+        {
+            "device_id": str(device_id),
+            "api_key": raw_key,
+            "name": name,
+            "source_type": source_type,
+        },
+        f"Device ID: {device_id}\nAPI Key:   {raw_key}\n"
+        f"Name:      {name}\nSource:    {source_type}",
+    )
+
+
 if __name__ == "__main__":
     app()
