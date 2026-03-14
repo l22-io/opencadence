@@ -375,3 +375,62 @@ def test_dead_letters_list_json(mock_factory_fn):
     data = json_mod.loads(result.stdout)
     assert len(data) == 1
     assert data[0]["event_type"] == "DataReceived"
+
+
+@patch("src.cli._get_session_factory")
+def test_dead_letters_replay(mock_factory_fn):
+    factory, session = _mock_factory()
+    mock_factory_fn.return_value = factory
+    row = _mock_dl_row(id_=42, replayed=False)
+    result_mock = MagicMock()
+    result_mock.first.return_value = row
+    session.execute.return_value = result_mock
+
+    result = runner.invoke(app, ["dead-letters", "replay", "42"])
+    assert result.exit_code == 0
+    assert "42" in result.stdout
+    assert "replayed" in result.stdout.lower()
+    assert session.commit.called
+
+
+@patch("src.cli._get_session_factory")
+def test_dead_letters_replay_not_found(mock_factory_fn):
+    factory, session = _mock_factory()
+    mock_factory_fn.return_value = factory
+    result_mock = MagicMock()
+    result_mock.first.return_value = None
+    session.execute.return_value = result_mock
+
+    result = runner.invoke(app, ["dead-letters", "replay", "999"])
+    assert result.exit_code == 1
+    assert "not found" in result.stdout
+
+
+@patch("src.cli._get_session_factory")
+def test_dead_letters_replay_already_replayed(mock_factory_fn):
+    factory, session = _mock_factory()
+    mock_factory_fn.return_value = factory
+    row = _mock_dl_row(id_=42, replayed=True)
+    result_mock = MagicMock()
+    result_mock.first.return_value = row
+    session.execute.return_value = result_mock
+
+    result = runner.invoke(app, ["dead-letters", "replay", "42"])
+    assert result.exit_code == 1
+    assert "already replayed" in result.stdout
+
+
+@patch("src.cli._get_session_factory")
+def test_dead_letters_replay_json(mock_factory_fn):
+    factory, session = _mock_factory()
+    mock_factory_fn.return_value = factory
+    row = _mock_dl_row(id_=42, replayed=False)
+    result_mock = MagicMock()
+    result_mock.first.return_value = row
+    session.execute.return_value = result_mock
+
+    result = runner.invoke(app, ["--json", "dead-letters", "replay", "42"])
+    assert result.exit_code == 0
+    data = json_mod.loads(result.stdout)
+    assert data["id"] == 42
+    assert data["status"] == "replayed"

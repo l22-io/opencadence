@@ -222,6 +222,40 @@ async def _export(
         typer.echo(output.getvalue().rstrip())
 
 
+@dead_letters_app.command("replay")
+def dl_replay(
+    dl_id: int = typer.Argument(..., help="Dead letter ID"),
+) -> None:
+    """Mark a dead letter as replayed."""
+    asyncio.run(_dl_replay(dl_id))
+
+
+async def _dl_replay(dl_id: int) -> None:
+    factory = _get_session_factory()
+    async with factory() as session:
+        result = await session.execute(
+            text("SELECT id, replayed_at FROM dead_letter WHERE id = :id"),
+            {"id": dl_id},
+        )
+        row = result.first()
+        if row is None:
+            _error(f"dead letter {dl_id} not found")
+        dl = dict(row._mapping)
+        if dl["replayed_at"] is not None:
+            _error(f"dead letter {dl_id} already replayed")
+
+        await session.execute(
+            text("UPDATE dead_letter SET replayed_at = :now WHERE id = :id"),
+            {"now": datetime.now(UTC), "id": dl_id},
+        )
+        await session.commit()
+
+    _output(
+        {"id": dl_id, "status": "replayed"},
+        f"Dead letter {dl_id} marked as replayed.",
+    )
+
+
 @dead_letters_app.command("list")
 def dl_list(
     status: str = typer.Option("pending", help="Filter: pending, replayed, or all"),
