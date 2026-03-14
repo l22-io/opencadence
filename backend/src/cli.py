@@ -54,7 +54,7 @@ def _get_settings() -> Settings:
 
 
 def _error(msg: str) -> None:
-    typer.echo(f"Error: {msg}", err=True)
+    typer.echo(f"Error: {msg}")
     raise typer.Exit(code=1)
 
 
@@ -99,6 +99,46 @@ async def _keys_generate(name: str, source_type: str) -> None:
         },
         f"Device ID: {device_id}\nAPI Key:   {raw_key}\n"
         f"Name:      {name}\nSource:    {source_type}",
+    )
+
+
+@keys_app.command("rotate")
+def keys_rotate(
+    device_id: str = typer.Argument(..., help="Device UUID"),
+) -> None:
+    """Rotate a device's API key."""
+    try:
+        did = UUID(device_id)
+    except ValueError:
+        _error(f"invalid UUID: {device_id}")
+    asyncio.run(_keys_rotate(did))
+
+
+async def _keys_rotate(device_id: UUID) -> None:
+    factory = _get_session_factory()
+    async with factory() as session:
+        result = await session.execute(
+            text("SELECT id, name, revoked_at FROM devices WHERE id = :id"),
+            {"id": device_id},
+        )
+        row = result.first()
+        if row is None:
+            _error(f"device {device_id} not found")
+        device = dict(row._mapping)
+        if device["revoked_at"] is not None:
+            _error(f"device {device_id} is revoked")
+
+        raw_key = generate_api_key(device_id)
+        key_hash = hash_api_key(raw_key)
+        await session.execute(
+            text("UPDATE devices SET api_key_hash = :hash WHERE id = :id"),
+            {"hash": key_hash, "id": device_id},
+        )
+        await session.commit()
+
+    _output(
+        {"device_id": str(device_id), "api_key": raw_key},
+        f"Device ID: {device_id}\nNew API Key: {raw_key}",
     )
 
 

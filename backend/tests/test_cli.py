@@ -73,3 +73,57 @@ def test_keys_generate_custom_source(mock_factory_fn):
     )
     assert result.exit_code == 0
     assert "health-connect" in result.stdout
+
+
+def _mock_device_row(device_id, revoked=False):
+    row = MagicMock()
+    row._mapping = {
+        "id": device_id,
+        "name": "test-device",
+        "revoked_at": datetime(2026, 1, 1, tzinfo=UTC) if revoked else None,
+    }
+    return row
+
+
+def _mock_result(rows):
+    result = MagicMock()
+    result.first.return_value = rows[0] if rows else None
+    result.__iter__ = MagicMock(return_value=iter(rows))
+    return result
+
+
+@patch("src.cli._get_session_factory")
+def test_keys_rotate(mock_factory_fn):
+    device_id = uuid4()
+    factory, session = _mock_factory()
+    mock_factory_fn.return_value = factory
+    session.execute.return_value = _mock_result([_mock_device_row(device_id)])
+
+    result = runner.invoke(app, ["keys", "rotate", str(device_id)])
+    assert result.exit_code == 0
+    assert "New API Key:" in result.stdout
+    assert "oc_" in result.stdout
+    assert session.commit.called
+
+
+@patch("src.cli._get_session_factory")
+def test_keys_rotate_not_found(mock_factory_fn):
+    factory, session = _mock_factory()
+    mock_factory_fn.return_value = factory
+    session.execute.return_value = _mock_result([])
+
+    result = runner.invoke(app, ["keys", "rotate", str(uuid4())])
+    assert result.exit_code == 1
+    assert "not found" in result.stdout
+
+
+@patch("src.cli._get_session_factory")
+def test_keys_rotate_revoked(mock_factory_fn):
+    device_id = uuid4()
+    factory, session = _mock_factory()
+    mock_factory_fn.return_value = factory
+    session.execute.return_value = _mock_result([_mock_device_row(device_id, revoked=True)])
+
+    result = runner.invoke(app, ["keys", "rotate", str(device_id)])
+    assert result.exit_code == 1
+    assert "revoked" in result.stdout
