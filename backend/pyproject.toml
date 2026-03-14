@@ -36,6 +36,9 @@ dev = [
     "types-redis>=4.6.0",
 ]
 
+[project.scripts]
+opencadence = "src.cli:app"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
