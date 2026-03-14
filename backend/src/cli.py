@@ -142,5 +142,43 @@ async def _keys_rotate(device_id: UUID) -> None:
     )
 
 
+@keys_app.command("revoke")
+def keys_revoke(
+    device_id: str = typer.Argument(..., help="Device UUID"),
+) -> None:
+    """Revoke a device's API key."""
+    try:
+        did = UUID(device_id)
+    except ValueError:
+        _error(f"invalid UUID: {device_id}")
+    asyncio.run(_keys_revoke(did))
+
+
+async def _keys_revoke(device_id: UUID) -> None:
+    factory = _get_session_factory()
+    async with factory() as session:
+        result = await session.execute(
+            text("SELECT id, name, revoked_at FROM devices WHERE id = :id"),
+            {"id": device_id},
+        )
+        row = result.first()
+        if row is None:
+            _error(f"device {device_id} not found")
+        device = dict(row._mapping)
+        if device["revoked_at"] is not None:
+            _error(f"device {device_id} is already revoked")
+
+        await session.execute(
+            text("UPDATE devices SET revoked_at = :now WHERE id = :id"),
+            {"now": datetime.now(UTC), "id": device_id},
+        )
+        await session.commit()
+
+    _output(
+        {"device_id": str(device_id), "status": "revoked"},
+        f"Device {device_id} revoked.",
+    )
+
+
 if __name__ == "__main__":
     app()

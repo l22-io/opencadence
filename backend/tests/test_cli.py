@@ -127,3 +127,39 @@ def test_keys_rotate_revoked(mock_factory_fn):
     result = runner.invoke(app, ["keys", "rotate", str(device_id)])
     assert result.exit_code == 1
     assert "revoked" in result.stdout
+
+
+@patch("src.cli._get_session_factory")
+def test_keys_revoke(mock_factory_fn):
+    device_id = uuid4()
+    factory, session = _mock_factory()
+    mock_factory_fn.return_value = factory
+    session.execute.return_value = _mock_result([_mock_device_row(device_id)])
+
+    result = runner.invoke(app, ["keys", "revoke", str(device_id)])
+    assert result.exit_code == 0
+    assert "revoked" in result.stdout.lower()
+    assert session.commit.called
+
+
+@patch("src.cli._get_session_factory")
+def test_keys_revoke_not_found(mock_factory_fn):
+    factory, session = _mock_factory()
+    mock_factory_fn.return_value = factory
+    session.execute.return_value = _mock_result([])
+
+    result = runner.invoke(app, ["keys", "revoke", str(uuid4())])
+    assert result.exit_code == 1
+    assert "not found" in result.stdout
+
+
+@patch("src.cli._get_session_factory")
+def test_keys_revoke_already_revoked(mock_factory_fn):
+    device_id = uuid4()
+    factory, session = _mock_factory()
+    mock_factory_fn.return_value = factory
+    session.execute.return_value = _mock_result([_mock_device_row(device_id, revoked=True)])
+
+    result = runner.invoke(app, ["keys", "revoke", str(device_id)])
+    assert result.exit_code == 1
+    assert "already revoked" in result.stdout
