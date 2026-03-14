@@ -1,11 +1,13 @@
 import json
 import logging
+import traceback
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from src.core.models import IngestPayload
 from src.core.registry import MetricRegistry
+from src.metrics.instruments import DEAD_LETTERS_TOTAL
 from src.processing.service import ProcessingService
 from src.storage.repository import SampleRepository
 
@@ -65,6 +67,22 @@ class StorageService:
                         len(result.anomalies),
                         payload.device_id,
                     )
-        except Exception:
+        except Exception as exc:
             logger.exception("Failed to process data for device %s", payload.device_id)
-            raise
+            # Persist to dead letter queue
+            async with self._session_factory() as dl_session:
+                await dl_session.execute(
+                    text("""
+                        INSERT INTO dead_letter (event_type, payload, error, module)
+                        VALUES (:event_type, :payload::jsonb, :error, :module)
+                    """),
+                    {
+                        "event_type": "DataReceived",
+                        "payload": json.dumps(payload.model_dump(mode="json")),
+                        "error": f"{exc}\n{traceback.format_exc()}",
+                        "module": "storage",
+                    },
+                )
+                await dl_session.commit()
+            DEAD_LETTERS_TOTAL.inc()
+            logger.info("Dead letter persisted for device %s", payload.device_id)

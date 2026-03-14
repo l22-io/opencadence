@@ -43,6 +43,11 @@ RATE_LIMIT_REJECTIONS = Counter(
     "Requests rejected by rate limiter",
 )
 
+DEAD_LETTERS_TOTAL = Counter(
+    "oc_dead_letters_total",
+    "Events persisted to dead letter queue",
+)
+
 # --- WebSocket metrics (set by streaming broadcaster) ---
 
 WS_CONNECTIONS_ACTIVE = Gauge(
