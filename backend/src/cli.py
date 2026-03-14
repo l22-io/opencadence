@@ -180,5 +180,47 @@ async def _keys_revoke(device_id: UUID) -> None:
     )
 
 
+@app.command("export")
+def export_cmd(
+    device_id: str = typer.Argument(..., help="Device UUID"),
+    metric: str = typer.Option(..., help="Metric name (e.g. heart_rate)"),
+    start: str = typer.Option(..., help="Start date (ISO format, e.g. 2026-03-01)"),
+    end: str = typer.Option(..., help="End date (ISO format, exclusive)"),
+    format: str = typer.Option("csv", help="Output format: csv or json"),  # noqa: A002
+) -> None:
+    """Export raw sample data to stdout."""
+    try:
+        did = UUID(device_id)
+    except ValueError:
+        _error(f"invalid UUID: {device_id}")
+    try:
+        start_dt = datetime.fromisoformat(start).replace(tzinfo=UTC)
+        end_dt = datetime.fromisoformat(end).replace(tzinfo=UTC)
+    except ValueError:
+        _error("invalid date format: use ISO format like 2026-03-01")
+    asyncio.run(_export(did, metric, start_dt, end_dt, format))
+
+
+async def _export(
+    device_id: UUID, metric: str, start: datetime, end: datetime, fmt: str
+) -> None:
+    factory = _get_session_factory()
+    repo = SampleRepository()
+    async with factory() as session:
+        rows = await repo.query_raw(session, device_id, metric, start, end)
+
+    use_json = _json_output or fmt == "json"
+    if use_json:
+        typer.echo(json_mod.dumps(rows, default=str))
+    else:
+        if not rows:
+            return
+        output = io.StringIO()
+        writer = csv.DictWriter(output, fieldnames=["time", "value", "unit", "source"])
+        writer.writeheader()
+        writer.writerows(rows)
+        typer.echo(output.getvalue().rstrip())
+
+
 if __name__ == "__main__":
     app()
