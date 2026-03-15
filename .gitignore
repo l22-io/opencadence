@@ -110,7 +110,7 @@ AGENTS.md
 .anthropic/
 .openai/
 
-# LLM context/memory/planning files
+# Internal project docs
 docs/superpowers/
 docs/handover.md
 

@@ -29,7 +29,7 @@ graph LR
 ## Quick Start
 
 ```bash
-git clone https://github.com/your-org/opencadence.git
+git clone https://github.com/l22-io/opencadence.git
 cd opencadence
 cp deploy/docker/.env.example deploy/docker/.env
 # Edit .env to set OC_JWT_SECRET

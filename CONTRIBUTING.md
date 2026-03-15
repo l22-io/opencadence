@@ -13,7 +13,7 @@ Thank you for your interest in contributing to OpenCadence! This guide will help
 ### Getting Started
 
 ```bash
-git clone https://github.com/your-org/opencadence.git
+git clone https://github.com/l22-io/opencadence.git
 cd opencadence
 make install      # Install dependencies
 make test         # Run tests
@@ -49,6 +49,10 @@ make lint         # Run linters
 - We use [ruff](https://docs.astral.sh/ruff/) for linting and formatting
 - Type hints are required for all public functions
 - Run `make lint` before committing
+
+### AI / LLM Tools
+
+Contributors are welcome to use AI coding assistants. The `.gitignore` excludes config files for common tools (Copilot, Cursor, etc.) so they don't end up in the repo. Please review any generated code before submitting -- you're responsible for understanding and testing what you commit.
 
 ### Adding a New Metric Type
 
