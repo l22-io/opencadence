@@ -34,7 +34,7 @@ class SampleRepository:
         """)
         result = await session.execute(stmt, rows)
         await session.commit()
-        return result.rowcount  # type: ignore[return-value]
+        return int(result.rowcount)  # type: ignore[attr-defined]
 
     async def query_raw(
         self,

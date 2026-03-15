@@ -47,6 +47,7 @@ def create_api_router(
             )
 
         async with session_factory() as session:
+            samples: list[RawSample] | list[AggregatedSample]
             if resolution == "raw":
                 rows = await repo.query_raw(session, device_id, metric, start, end)
                 samples = [

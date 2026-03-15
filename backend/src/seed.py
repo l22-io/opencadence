@@ -13,7 +13,7 @@ from src.core.config import Settings
 
 
 async def seed() -> None:
-    settings = Settings()  # type: ignore[call-arg]
+    settings = Settings()
     engine = create_async_engine(settings.database_url)
 
     device_id = uuid4()

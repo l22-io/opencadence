@@ -12,7 +12,9 @@ class RateLimiter:
     Each device key gets `max_requests` per `window_seconds` window.
     """
 
-    def __init__(self, redis: Redis, max_requests: int = 100, window_seconds: int = 60) -> None:
+    def __init__(
+        self, redis: Redis[bytes], max_requests: int = 100, window_seconds: int = 60
+    ) -> None:
         self.redis = redis
         self.max_requests = max_requests
         self.window_seconds = window_seconds

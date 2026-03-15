@@ -5,7 +5,7 @@ from typing import Any
 from uuid import UUID
 
 import bcrypt
-from jose import JWTError, jwt
+from jose import JWTError, jwt  # type: ignore[import-untyped]
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ def create_jwt_token(
         "exp": datetime.now(UTC) + timedelta(hours=expiry_hours),
         "iat": datetime.now(UTC),
     }
-    return jwt.encode(payload, secret, algorithm=algorithm)
+    return str(jwt.encode(payload, secret, algorithm=algorithm))
 
 
 def decode_jwt_token(
@@ -53,7 +53,8 @@ def decode_jwt_token(
     algorithm: str = "HS256",
 ) -> dict[str, Any] | None:
     try:
-        return jwt.decode(token, secret, algorithms=[algorithm])
+        result: dict[str, Any] = jwt.decode(token, secret, algorithms=[algorithm])
+        return result
     except JWTError:
         logger.warning("Invalid JWT token")
         return None

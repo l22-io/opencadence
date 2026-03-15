@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     if settings is None:
-        settings = Settings()  # type: ignore[call-arg]
+        settings = Settings()
 
     setup_logging(level=settings.log_level)
 
@@ -70,7 +70,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         yield
         await broadcaster.stop()
         await event_bus.stop()
-        await redis.aclose()
+        await redis.aclose()  # type: ignore[attr-defined]
         logger.info("OpenCadence stopped")
 
     app = FastAPI(

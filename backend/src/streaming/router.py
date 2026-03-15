@@ -1,5 +1,6 @@
 import logging
 from datetime import UTC, datetime
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -79,7 +80,7 @@ def create_stream_router(
 
     async def _handle_subscribe(
         ws: WebSocket,
-        msg: dict,
+        msg: dict[str, Any],
         filter_: SubscriptionFilter,
         allowed_device_ids: set[UUID],
         registry: MetricRegistry,
@@ -163,7 +164,7 @@ def create_stream_router(
 
     def _handle_unsubscribe(
         ws: WebSocket,
-        msg: dict,
+        msg: dict[str, Any],
         filter_: SubscriptionFilter,
         allowed_device_ids: set[UUID],
     ) -> None:

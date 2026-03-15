@@ -1,5 +1,6 @@
 import logging
 from datetime import UTC, datetime
+from typing import Any
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 class DeadLetterResponse(BaseModel):
     id: int
     event_type: str
-    payload: dict
+    payload: dict[str, Any]
     error: str
     module: str
     created_at: datetime

@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from typing import Any
 from uuid import UUID
 
 from src.core.models import Sample
@@ -10,7 +11,7 @@ from src.core.registry import MetricDefinition
 class AnomalyFlag:
     reason: str
     severity: str
-    context: dict
+    context: dict[str, Any]
 
 
 @dataclass

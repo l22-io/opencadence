@@ -90,7 +90,7 @@ class WebSocketBroadcaster:
         self,
         device_id: UUID,
         metric: str,
-        data: dict,
+        data: dict[str, Any],
     ) -> None:
         disconnected: list[WebSocket] = []
         for ws, filter_ in list(self._clients.items()):

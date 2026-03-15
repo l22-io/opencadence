@@ -36,9 +36,9 @@ def main(
     _json_output = json_output
 
 
-def _get_session_factory() -> async_sessionmaker:
+def _get_session_factory() -> async_sessionmaker[Any]:
     try:
-        settings = Settings()  # type: ignore[call-arg]
+        settings = Settings()
     except Exception as exc:
         typer.echo(f"Error: failed to load settings: {exc}", err=True)
         raise typer.Exit(code=1) from exc
@@ -47,7 +47,7 @@ def _get_session_factory() -> async_sessionmaker:
 
 def _get_settings() -> Settings:
     try:
-        return Settings()  # type: ignore[call-arg]
+        return Settings()
     except Exception as exc:
         typer.echo(f"Error: failed to load settings: {exc}", err=True)
         raise typer.Exit(code=1) from exc
@@ -321,7 +321,7 @@ async def _health() -> None:
     try:
         redis = Redis.from_url(settings.redis_url)
         await redis.ping()
-        await redis.aclose()
+        await redis.aclose()  # type: ignore[attr-defined]
         statuses["redis"] = "ok"
     except Exception as exc:
         statuses["redis"] = f"error: {exc}"

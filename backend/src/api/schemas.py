@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -42,4 +43,4 @@ class AnomalyResponse(BaseModel):
     value: float
     reason: str
     severity: str
-    context: dict | None = None
+    context: dict[str, Any] | None = None

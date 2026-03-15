@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Any
 from uuid import uuid4
 
 from sqlalchemy import (
@@ -45,7 +46,7 @@ class Device(Base):
     name: Mapped[str] = mapped_column(Text)
     api_key_hash: Mapped[str] = mapped_column(Text)
     source_type: Mapped[str] = mapped_column(Text)
-    metadata_: Mapped[dict | None] = mapped_column("metadata", JSONB, nullable=True)
+    metadata_: Mapped[dict[str, Any] | None] = mapped_column("metadata", JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=text("now()")
     )
@@ -62,7 +63,7 @@ class Anomaly(Base):
     value: Mapped[float] = mapped_column(Double)
     reason: Mapped[str] = mapped_column(Text)
     severity: Mapped[str] = mapped_column(String(20))
-    context: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    context: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=text("now()")
     )
@@ -73,7 +74,7 @@ class DeadLetter(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     event_type: Mapped[str] = mapped_column(Text)
-    payload: Mapped[dict] = mapped_column(JSONB)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB)
     error: Mapped[str] = mapped_column(Text)
     module: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(
