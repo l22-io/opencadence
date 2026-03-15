@@ -1,9 +1,11 @@
 import time
+from typing import TYPE_CHECKING
 from uuid import UUID
 
-from redis.asyncio import Redis
-
 from src.metrics.instruments import RATE_LIMIT_REJECTIONS
+
+if TYPE_CHECKING:
+    from redis.asyncio import Redis
 
 
 class RateLimiter:
@@ -13,7 +15,7 @@ class RateLimiter:
     """
 
     def __init__(
-        self, redis: Redis[bytes], max_requests: int = 100, window_seconds: int = 60
+        self, redis: "Redis[bytes]", max_requests: int = 100, window_seconds: int = 60
     ) -> None:
         self.redis = redis
         self.max_requests = max_requests
