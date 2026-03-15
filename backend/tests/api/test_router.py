@@ -10,14 +10,17 @@ from src.api.router import create_api_router
 from src.core.auth import create_jwt_token
 from src.storage.repository import SampleRepository
 
-JWT_SECRET = "test-secret-key-min-32-characters-long"
+JWT_SECRET = "test-secret-key-min-32-characters-long"  # noqa: S105
 
 
 @pytest.fixture
 def mock_repo() -> AsyncMock:
     repo = AsyncMock(spec=SampleRepository)
     repo.query_raw.return_value = [
-        {"time": datetime(2026, 3, 11, 10, 0, tzinfo=UTC), "value": 72.0, "unit": "bpm", "source": "test"}
+        {
+            "time": datetime(2026, 3, 11, 10, 0, tzinfo=UTC),
+            "value": 72.0, "unit": "bpm", "source": "test",
+        }
     ]
     repo.query_aggregates.return_value = [
         {

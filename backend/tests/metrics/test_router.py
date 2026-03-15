@@ -58,7 +58,7 @@ def test_metrics_no_auth_when_token_not_set(mock_app_state):
 
 def test_metrics_auth_required_when_token_set(mock_app_state):
     engine, redis, event_bus = mock_app_state
-    app = _make_app(engine, redis, event_bus, metrics_token="secret-token")
+    app = _make_app(engine, redis, event_bus, metrics_token="secret-token")  # noqa: S106
     client = TestClient(app)
 
     # No auth header

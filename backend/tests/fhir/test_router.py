@@ -12,7 +12,7 @@ from src.core.registry import MetricRegistry
 from src.fhir.router import create_fhir_router
 from src.storage.repository import SampleRepository
 
-JWT_SECRET = "test-secret-key-min-32-characters-long"
+JWT_SECRET = "test-secret-key-min-32-characters-long"  # noqa: S105
 
 
 @pytest.fixture
@@ -39,7 +39,10 @@ fhir:
 def mock_repo() -> AsyncMock:
     repo = AsyncMock(spec=SampleRepository)
     repo.query_raw.return_value = [
-        {"time": datetime(2026, 3, 11, 10, 0, tzinfo=UTC), "value": 72.0, "unit": "bpm", "source": "test"}
+        {
+            "time": datetime(2026, 3, 11, 10, 0, tzinfo=UTC),
+            "value": 72.0, "unit": "bpm", "source": "test",
+        }
     ]
     return repo
 

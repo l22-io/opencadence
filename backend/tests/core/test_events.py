@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from src.core.events import Event, EventBus, InProcessEventBus
+from src.core.events import Event, InProcessEventBus
 
 
 @dataclass(frozen=True)

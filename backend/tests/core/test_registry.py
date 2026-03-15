@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from src.core.registry import MetricDefinition, MetricRegistry
+from src.core.registry import MetricRegistry
 
 
 @pytest.fixture

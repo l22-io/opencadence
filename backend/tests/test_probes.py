@@ -40,7 +40,7 @@ def _make_app(session_factory) -> FastAPI:
     settings = Settings(
         database_url="postgresql+asyncpg://test:test@localhost/test",
         redis_url="redis://localhost",
-        jwt_secret="test-secret",
+        jwt_secret="test-secret",  # noqa: S106
     )  # type: ignore[call-arg]
     app = create_app(settings=settings)
     # Override the session factory used by probes

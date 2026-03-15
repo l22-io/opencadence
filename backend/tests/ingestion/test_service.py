@@ -6,7 +6,7 @@ import pytest
 
 from src.core.models import IngestPayload, Sample
 from src.core.registry import MetricRegistry
-from src.ingestion.service import IngestionService, ValidationError
+from src.ingestion.service import IngestionService
 
 
 @pytest.fixture

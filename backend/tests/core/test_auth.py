@@ -1,7 +1,5 @@
 from uuid import uuid4
 
-import pytest
-
 from src.core.auth import (
     create_jwt_token,
     decode_jwt_token,
@@ -21,7 +19,7 @@ def test_hash_and_verify_api_key() -> None:
 
 def test_create_and_decode_jwt() -> None:
     device_ids = [uuid4(), uuid4()]
-    secret = "test-secret-key-min-32-characters-long"
+    secret = "test-secret-key-min-32-characters-long"  # noqa: S105
     token = create_jwt_token(
         device_ids=device_ids,
         secret=secret,
@@ -35,7 +33,7 @@ def test_create_and_decode_jwt() -> None:
 
 
 def test_decode_invalid_jwt() -> None:
-    secret = "test-secret-key-min-32-characters-long"
+    secret = "test-secret-key-min-32-characters-long"  # noqa: S105
     payload = decode_jwt_token("invalid.token.here", secret=secret, algorithm="HS256")
     assert payload is None
 

@@ -1,5 +1,5 @@
 from datetime import UTC, datetime
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
@@ -9,7 +9,7 @@ from src.core.auth import create_jwt_token, generate_api_key, hash_api_key
 from src.core.dependencies import JWTClaims, require_api_key, require_jwt
 from src.storage.models import Device
 
-JWT_SECRET = "test-secret-key-min-32-characters-long"
+JWT_SECRET = "test-secret-key-min-32-characters-long"  # noqa: S105
 
 
 @pytest.fixture
@@ -131,5 +131,8 @@ async def test_require_jwt_invalid_token() -> None:
 async def test_require_jwt_wrong_secret() -> None:
     token = create_jwt_token([uuid4()], secret=JWT_SECRET)
     with pytest.raises(HTTPException) as exc_info:
-        await require_jwt(secret="wrong-secret-key-at-least-32-chars", authorization=f"Bearer {token}")
+        await require_jwt(
+            secret="wrong-secret-key-at-least-32-chars",  # noqa: S106
+            authorization=f"Bearer {token}",
+        )
     assert exc_info.value.status_code == 401

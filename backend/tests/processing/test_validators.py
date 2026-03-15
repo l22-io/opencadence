@@ -2,8 +2,8 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 from src.core.models import Sample
-from src.core.registry import MetricDefinition, ValidRange, FhirMapping
-from src.processing.base import ProcessingContext, AnomalyFlag
+from src.core.registry import FhirMapping, MetricDefinition, ValidRange
+from src.processing.base import ProcessingContext
 from src.processing.validators import RangeValidator
 
 
