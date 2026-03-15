@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 @dataclass(frozen=True)
 class DataReceived(Event):
     """Emitted when validated data is ready for processing."""
+
     payload: IngestPayload
 
 
@@ -48,9 +49,7 @@ def create_ingest_router(
         device: Device = Depends(get_authenticated_device),
     ) -> IngestResponse:
         if payload.device_id != device.id:
-            raise HTTPException(
-                status_code=403, detail="Device ID does not match API key"
-            )
+            raise HTTPException(status_code=403, detail="Device ID does not match API key")
 
         if rate_limiter is not None:
             allowed, remaining, reset = await rate_limiter.check(device.id)

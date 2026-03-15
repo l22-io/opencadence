@@ -87,7 +87,10 @@ class WebSocketBroadcaster:
         return self._clients.get(ws)
 
     async def broadcast(
-        self, device_id: UUID, metric: str, data: dict,
+        self,
+        device_id: UUID,
+        metric: str,
+        data: dict,
     ) -> None:
         disconnected: list[WebSocket] = []
         for ws, filter_ in list(self._clients.items()):

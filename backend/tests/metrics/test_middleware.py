@@ -59,13 +59,9 @@ def test_middleware_records_duration():
     app = _make_app()
     client = TestClient(app, raise_server_exceptions=False)
 
-    before = _histogram_count(
-        HTTP_REQUEST_DURATION, {"method": "GET", "path": "/test"}
-    )
+    before = _histogram_count(HTTP_REQUEST_DURATION, {"method": "GET", "path": "/test"})
     client.get("/test")
-    after = _histogram_count(
-        HTTP_REQUEST_DURATION, {"method": "GET", "path": "/test"}
-    )
+    after = _histogram_count(HTTP_REQUEST_DURATION, {"method": "GET", "path": "/test"})
 
     assert after - before == 1
 

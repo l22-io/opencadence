@@ -69,15 +69,17 @@ def _anomaly_url(device_id, **kwargs):
 
 def test_query_anomalies(device_id, auth_headers) -> None:
     now = datetime(2026, 3, 13, 12, 0, tzinfo=UTC)
-    rows = [{
-        "time": now,
-        "device_id": device_id,
-        "metric": "heart_rate",
-        "value": 350.0,
-        "reason": "Value 350.0 outside range [20, 300]",
-        "severity": "warning",
-        "context": {"min": 20, "max": 300},
-    }]
+    rows = [
+        {
+            "time": now,
+            "device_id": device_id,
+            "metric": "heart_rate",
+            "value": 350.0,
+            "reason": "Value 350.0 outside range [20, 300]",
+            "severity": "warning",
+            "context": {"min": 20, "max": 300},
+        }
+    ]
     client = _make_client(rows=rows)
     response = client.get(_anomaly_url(device_id), headers=auth_headers)
     assert response.status_code == 200
@@ -96,9 +98,7 @@ def test_query_anomalies_empty(device_id, auth_headers) -> None:
 
 def test_query_anomalies_device_scope(device_id, other_device_id, auth_headers) -> None:
     client = _make_client()
-    response = client.get(
-        _anomaly_url(other_device_id), headers=auth_headers
-    )
+    response = client.get(_anomaly_url(other_device_id), headers=auth_headers)
     assert response.status_code == 403
 
 
@@ -110,17 +110,13 @@ def test_query_anomalies_missing_auth(device_id) -> None:
 
 def test_query_anomalies_with_metric_filter(device_id, auth_headers) -> None:
     client = _make_client()
-    response = client.get(
-        _anomaly_url(device_id, metric="heart_rate"), headers=auth_headers
-    )
+    response = client.get(_anomaly_url(device_id, metric="heart_rate"), headers=auth_headers)
     assert response.status_code == 200
     assert response.json() == []
 
 
 def test_query_anomalies_pagination(device_id, auth_headers) -> None:
     client = _make_client()
-    response = client.get(
-        _anomaly_url(device_id, limit="50", offset="10"), headers=auth_headers
-    )
+    response = client.get(_anomaly_url(device_id, limit="50", offset="10"), headers=auth_headers)
     assert response.status_code == 200
     assert response.json() == []

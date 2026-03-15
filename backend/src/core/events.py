@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 @dataclass(frozen=True)
 class Event:
     """Base class for all events."""
+
     pass
 
 
@@ -76,6 +77,6 @@ class InProcessEventBus:
                 except Exception:
                     logger.exception(
                         "Handler %s failed for event %s",
-                        handler.__name__ if hasattr(handler, '__name__') else handler,
+                        handler.__name__ if hasattr(handler, "__name__") else handler,
                         type(event).__name__,
                     )

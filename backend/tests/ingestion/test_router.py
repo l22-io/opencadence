@@ -73,7 +73,9 @@ def client(registry: MetricRegistry, mock_session_factory) -> TestClient:
     service = IngestionService(registry=registry)
     app.include_router(
         create_ingest_router(
-            service=service, event_bus=bus, session_factory=mock_session_factory,
+            service=service,
+            event_bus=bus,
+            session_factory=mock_session_factory,
         )
     )
     return TestClient(app)
@@ -152,15 +154,19 @@ def _make_rate_limited_client(registry, mock_session_factory, mock_redis):
     limiter = RateLimiter(redis=mock_redis, max_requests=2, window_seconds=60)
     app.include_router(
         create_ingest_router(
-            service=service, event_bus=bus,
-            session_factory=mock_session_factory, rate_limiter=limiter,
+            service=service,
+            event_bus=bus,
+            session_factory=mock_session_factory,
+            rate_limiter=limiter,
         )
     )
     return TestClient(app)
 
 
 def test_ingest_rate_limited(
-    registry: MetricRegistry, mock_session_factory, device_and_key,
+    registry: MetricRegistry,
+    mock_session_factory,
+    device_and_key,
 ) -> None:
     device, raw_key = device_and_key
     mock_redis = AsyncMock()

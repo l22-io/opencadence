@@ -19,14 +19,19 @@ def mock_repo() -> AsyncMock:
     repo.query_raw.return_value = [
         {
             "time": datetime(2026, 3, 11, 10, 0, tzinfo=UTC),
-            "value": 72.0, "unit": "bpm", "source": "test",
+            "value": 72.0,
+            "unit": "bpm",
+            "source": "test",
         }
     ]
     repo.query_aggregates.return_value = [
         {
             "time": datetime(2026, 3, 11, 10, 0, tzinfo=UTC),
-            "min_value": 60.0, "max_value": 85.0,
-            "mean_value": 72.0, "stddev_value": 5.0, "sample_count": 12,
+            "min_value": 60.0,
+            "max_value": 85.0,
+            "mean_value": 72.0,
+            "stddev_value": 5.0,
+            "sample_count": 12,
         }
     ]
     return repo

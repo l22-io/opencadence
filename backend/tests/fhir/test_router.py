@@ -41,7 +41,9 @@ def mock_repo() -> AsyncMock:
     repo.query_raw.return_value = [
         {
             "time": datetime(2026, 3, 11, 10, 0, tzinfo=UTC),
-            "value": 72.0, "unit": "bpm", "source": "test",
+            "value": 72.0,
+            "unit": "bpm",
+            "source": "test",
         }
     ]
     return repo

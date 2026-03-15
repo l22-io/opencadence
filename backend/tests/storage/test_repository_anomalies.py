@@ -44,17 +44,13 @@ async def test_query_anomalies(repo: SampleRepository, device_id) -> None:
 
 
 @pytest.mark.asyncio
-async def test_query_anomalies_with_metric_filter(
-    repo: SampleRepository, device_id
-) -> None:
+async def test_query_anomalies_with_metric_filter(repo: SampleRepository, device_id) -> None:
     session = AsyncMock()
     session.execute.return_value = []
 
     start = datetime(2026, 3, 13, 0, 0, tzinfo=UTC)
     end = datetime(2026, 3, 14, 0, 0, tzinfo=UTC)
-    result = await repo.query_anomalies(
-        session, device_id, start, end, metric="heart_rate"
-    )
+    result = await repo.query_anomalies(session, device_id, start, end, metric="heart_rate")
 
     assert result == []
     call_args = session.execute.call_args

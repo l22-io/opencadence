@@ -20,8 +20,15 @@ def _mock_dl_row(id_=1, replayed=False):
         "event_type": "DataReceived",
         "payload": {
             "device_id": str(uuid4()),
-            "batch": [{"metric": "heart_rate", "value": 72.0, "unit": "bpm",
-                        "timestamp": "2026-03-14T12:00:00Z", "source": "healthkit"}],
+            "batch": [
+                {
+                    "metric": "heart_rate",
+                    "value": 72.0,
+                    "unit": "bpm",
+                    "timestamp": "2026-03-14T12:00:00Z",
+                    "source": "healthkit",
+                }
+            ],
         },
         "error": "connection refused",
         "module": "storage",
@@ -53,12 +60,14 @@ def _make_client(rows=None, event_bus=None):
         event_bus.publish = AsyncMock(return_value=True)
 
     app = FastAPI()
-    app.include_router(create_dead_letter_router(
-        session_factory=session_factory,
-        event_bus=event_bus,
-        jwt_secret=JWT_SECRET,
-        jwt_algorithm="HS256",
-    ))
+    app.include_router(
+        create_dead_letter_router(
+            session_factory=session_factory,
+            event_bus=event_bus,
+            jwt_secret=JWT_SECRET,
+            jwt_algorithm="HS256",
+        )
+    )
     return TestClient(app), mock_session, event_bus
 
 
@@ -85,7 +94,8 @@ def test_list_dead_letters_replayed_filter(auth_headers):
     client, _, _ = _make_client(rows=rows)
 
     response = client.get(
-        "/api/v1/dead-letters?status=replayed", headers=auth_headers,
+        "/api/v1/dead-letters?status=replayed",
+        headers=auth_headers,
     )
     assert response.status_code == 200
 

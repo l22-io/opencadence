@@ -42,8 +42,11 @@ def test_process_valid_samples(service: ProcessingService) -> None:
         device_id=device_id,
         batch=[
             Sample(
-                metric="heart_rate", value=72.0, unit="bpm",
-                timestamp=datetime.now(UTC), source="test",
+                metric="heart_rate",
+                value=72.0,
+                unit="bpm",
+                timestamp=datetime.now(UTC),
+                source="test",
             ),
         ],
     )
@@ -58,8 +61,11 @@ def test_process_flags_anomalies(service: ProcessingService) -> None:
         device_id=device_id,
         batch=[
             Sample(
-                metric="heart_rate", value=350.0, unit="bpm",
-                timestamp=datetime.now(UTC), source="test",
+                metric="heart_rate",
+                value=350.0,
+                unit="bpm",
+                timestamp=datetime.now(UTC),
+                source="test",
             ),
         ],
     )
@@ -70,9 +76,7 @@ def test_process_flags_anomalies(service: ProcessingService) -> None:
 
 def _anomaly_counter_value(metric_type, validator):
     try:
-        return ANOMALIES_FLAGGED.labels(
-            metric_type=metric_type, validator=validator
-        )._value.get()
+        return ANOMALIES_FLAGGED.labels(metric_type=metric_type, validator=validator)._value.get()
     except KeyError:
         return 0.0
 
@@ -80,8 +84,11 @@ def _anomaly_counter_value(metric_type, validator):
 def test_process_increments_anomaly_counter(service: ProcessingService) -> None:
     before = _anomaly_counter_value("heart_rate", "RangeValidator")
     sample = Sample(
-        metric="heart_rate", value=350.0, unit="bpm",
-        timestamp=datetime.now(UTC), source="test",
+        metric="heart_rate",
+        value=350.0,
+        unit="bpm",
+        timestamp=datetime.now(UTC),
+        source="test",
     )
     service.process(uuid4(), [sample])
     after = _anomaly_counter_value("heart_rate", "RangeValidator")

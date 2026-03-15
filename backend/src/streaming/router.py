@@ -49,19 +49,27 @@ def create_stream_router(
 
                 if action == "subscribe":
                     await _handle_subscribe(
-                        ws, msg, filter_, allowed_device_ids, registry,
+                        ws,
+                        msg,
+                        filter_,
+                        allowed_device_ids,
+                        registry,
                     )
                 elif action == "unsubscribe":
                     _handle_unsubscribe(ws, msg, filter_, allowed_device_ids)
-                    await ws.send_json({
-                        "type": "unsubscribed",
-                        "device_ids": msg.get("device_ids", []),
-                    })
+                    await ws.send_json(
+                        {
+                            "type": "unsubscribed",
+                            "device_ids": msg.get("device_ids", []),
+                        }
+                    )
                 else:
-                    await ws.send_json({
-                        "type": "error",
-                        "message": f"Unknown action: {action}",
-                    })
+                    await ws.send_json(
+                        {
+                            "type": "error",
+                            "message": f"Unknown action: {action}",
+                        }
+                    )
         except WebSocketDisconnect:
             pass
         except Exception:
@@ -89,10 +97,12 @@ def create_stream_router(
                 await ws.send_json({"type": "error", "message": f"Invalid device ID: {raw_id}"})
                 return
             if did not in allowed_device_ids:
-                await ws.send_json({
-                    "type": "error",
-                    "message": f"Device {raw_id} not authorized for this token",
-                })
+                await ws.send_json(
+                    {
+                        "type": "error",
+                        "message": f"Device {raw_id} not authorized for this token",
+                    }
+                )
                 return
             device_ids.append(did)
 
@@ -119,28 +129,37 @@ def create_stream_router(
                 for did in device_ids:
                     for metric_name in query_metrics:
                         rows = await repo.query_raw(
-                            session, did, metric_name, start=since, end=now, limit=1000,
+                            session,
+                            did,
+                            metric_name,
+                            start=since,
+                            end=now,
+                            limit=1000,
                         )
                         for row in rows:
-                            await ws.send_json({
-                                "type": "backfill",
-                                "data": {
-                                    "device_id": str(did),
-                                    "metric": metric_name,
-                                    "time": row["time"].isoformat(),
-                                    "value": row["value"],
-                                    "unit": row["unit"],
-                                    "source": row["source"],
-                                },
-                            })
+                            await ws.send_json(
+                                {
+                                    "type": "backfill",
+                                    "data": {
+                                        "device_id": str(did),
+                                        "metric": metric_name,
+                                        "time": row["time"].isoformat(),
+                                        "value": row["value"],
+                                        "unit": row["unit"],
+                                        "source": row["source"],
+                                    },
+                                }
+                            )
 
             await ws.send_json({"type": "backfill_complete"})
 
-        await ws.send_json({
-            "type": "subscribed",
-            "device_ids": [str(d) for d in device_ids],
-            "metrics": list(metrics) if metrics else None,
-        })
+        await ws.send_json(
+            {
+                "type": "subscribed",
+                "device_ids": [str(d) for d in device_ids],
+                "metrics": list(metrics) if metrics else None,
+            }
+        )
 
     def _handle_unsubscribe(
         ws: WebSocket,

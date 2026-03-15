@@ -72,13 +72,15 @@ def test_list_devices(device_id, auth_headers) -> None:
 
 def test_list_devices_revoked(device_id, auth_headers) -> None:
     now = datetime(2026, 3, 13, 12, 0, tzinfo=UTC)
-    rows = [{
-        "id": device_id,
-        "name": "Old Watch",
-        "source_type": "apple_health",
-        "created_at": now,
-        "revoked_at": now,
-    }]
+    rows = [
+        {
+            "id": device_id,
+            "name": "Old Watch",
+            "source_type": "apple_health",
+            "created_at": now,
+            "revoked_at": now,
+        }
+    ]
     client = _make_client(device_id, rows=rows)
     response = client.get("/api/v1/devices", headers=auth_headers)
     assert response.status_code == 200

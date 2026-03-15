@@ -26,7 +26,9 @@ def create_fhir_router(
         if jwt_secret is None:
             raise HTTPException(status_code=500, detail="Auth not configured")
         return await require_jwt(
-            secret=jwt_secret, algorithm=jwt_algorithm, authorization=authorization,
+            secret=jwt_secret,
+            algorithm=jwt_algorithm,
+            authorization=authorization,
         )
 
     @router.get("/Observation")
@@ -48,9 +50,7 @@ def create_fhir_router(
             return {"resourceType": "Bundle", "type": "searchset", "total": 0, "entry": []}
 
         async with session_factory() as session:
-            rows = await repo.query_raw(
-                session, device_id, metric, start, end, limit=_count
-            )
+            rows = await repo.query_raw(session, device_id, metric, start, end, limit=_count)
 
         entries = [
             {

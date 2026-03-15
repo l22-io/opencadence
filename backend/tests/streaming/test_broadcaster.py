@@ -122,11 +122,18 @@ async def test_broadcast_sends_to_matching_client(broadcaster):
     filter_.add(device_id, metrics={"heart_rate"})
     broadcaster.register(ws, filter_)
 
-    await broadcaster.broadcast(device_id, "heart_rate", {
-        "device_id": str(device_id), "metric": "heart_rate",
-        "time": "2026-03-13T12:00:00Z", "value": 72.0,
-        "unit": "bpm", "source": "healthkit",
-    })
+    await broadcaster.broadcast(
+        device_id,
+        "heart_rate",
+        {
+            "device_id": str(device_id),
+            "metric": "heart_rate",
+            "time": "2026-03-13T12:00:00Z",
+            "value": 72.0,
+            "unit": "bpm",
+            "source": "healthkit",
+        },
+    )
 
     ws.send_json.assert_called_once()
     msg = ws.send_json.call_args[0][0]
@@ -142,11 +149,18 @@ async def test_broadcast_skips_non_matching_client(broadcaster):
     filter_.add(device_id, metrics={"spo2"})
     broadcaster.register(ws, filter_)
 
-    await broadcaster.broadcast(device_id, "heart_rate", {
-        "device_id": str(device_id), "metric": "heart_rate",
-        "time": "2026-03-13T12:00:00Z", "value": 72.0,
-        "unit": "bpm", "source": "healthkit",
-    })
+    await broadcaster.broadcast(
+        device_id,
+        "heart_rate",
+        {
+            "device_id": str(device_id),
+            "metric": "heart_rate",
+            "time": "2026-03-13T12:00:00Z",
+            "value": 72.0,
+            "unit": "bpm",
+            "source": "healthkit",
+        },
+    )
 
     ws.send_json.assert_not_called()
 
@@ -160,11 +174,18 @@ async def test_broadcast_disconnects_slow_client(broadcaster):
     filter_.add(device_id, metrics=None)
     broadcaster.register(ws, filter_)
 
-    await broadcaster.broadcast(device_id, "heart_rate", {
-        "device_id": str(device_id), "metric": "heart_rate",
-        "time": "2026-03-13T12:00:00Z", "value": 72.0,
-        "unit": "bpm", "source": "healthkit",
-    })
+    await broadcaster.broadcast(
+        device_id,
+        "heart_rate",
+        {
+            "device_id": str(device_id),
+            "metric": "heart_rate",
+            "time": "2026-03-13T12:00:00Z",
+            "value": 72.0,
+            "unit": "bpm",
+            "source": "healthkit",
+        },
+    )
 
     ws.close.assert_called_once()
     assert broadcaster.connection_count == 0
@@ -195,7 +216,9 @@ async def test_handle_data_received_broadcasts_samples(broadcaster):
         device_id=device_id,
         batch=[
             Sample(
-                metric="heart_rate", value=72.0, unit="bpm",
+                metric="heart_rate",
+                value=72.0,
+                unit="bpm",
                 timestamp=datetime(2026, 3, 13, 12, 0, tzinfo=UTC),
                 source="healthkit",
             ),

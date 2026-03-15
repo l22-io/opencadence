@@ -201,9 +201,7 @@ def export_cmd(
     asyncio.run(_export(did, metric, start_dt, end_dt, format))
 
 
-async def _export(
-    device_id: UUID, metric: str, start: datetime, end: datetime, fmt: str
-) -> None:
+async def _export(device_id: UUID, metric: str, start: datetime, end: datetime, fmt: str) -> None:
     factory = _get_session_factory()
     repo = SampleRepository()
     async with factory() as session:

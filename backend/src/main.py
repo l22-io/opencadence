@@ -50,15 +50,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     # Rate limiting
     redis = Redis.from_url(settings.redis_url)
-    rate_limiter = RateLimiter(
-        redis=redis, max_requests=settings.api_rate_limit, window_seconds=60
-    )
+    rate_limiter = RateLimiter(redis=redis, max_requests=settings.api_rate_limit, window_seconds=60)
 
     # Services
     ingestion_service = IngestionService(registry=registry)
-    storage_service = StorageService(
-        session_factory=session_factory, registry=registry
-    )
+    storage_service = StorageService(session_factory=session_factory, registry=registry)
     broadcaster = WebSocketBroadcaster()
 
     @asynccontextmanager
@@ -85,51 +81,74 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
 
     # Mount routers
-    app.include_router(create_ingest_router(
-        service=ingestion_service, event_bus=event_bus,
-        session_factory=session_factory, rate_limiter=rate_limiter,
-    ))
-    app.include_router(create_api_router(
-        session_factory=session_factory, repo=repo,
-        jwt_secret=settings.jwt_secret, jwt_algorithm=settings.jwt_algorithm,
-    ))
-    app.include_router(create_fhir_router(
-        session_factory=session_factory, repo=repo, registry=registry,
-        jwt_secret=settings.jwt_secret, jwt_algorithm=settings.jwt_algorithm,
-    ))
-    app.include_router(create_devices_router(
-        session_factory=session_factory,
-        jwt_secret=settings.jwt_secret,
-        jwt_algorithm=settings.jwt_algorithm,
-    ))
-    app.include_router(create_anomalies_router(
-        session_factory=session_factory,
-        jwt_secret=settings.jwt_secret,
-        jwt_algorithm=settings.jwt_algorithm,
-    ))
+    app.include_router(
+        create_ingest_router(
+            service=ingestion_service,
+            event_bus=event_bus,
+            session_factory=session_factory,
+            rate_limiter=rate_limiter,
+        )
+    )
+    app.include_router(
+        create_api_router(
+            session_factory=session_factory,
+            repo=repo,
+            jwt_secret=settings.jwt_secret,
+            jwt_algorithm=settings.jwt_algorithm,
+        )
+    )
+    app.include_router(
+        create_fhir_router(
+            session_factory=session_factory,
+            repo=repo,
+            registry=registry,
+            jwt_secret=settings.jwt_secret,
+            jwt_algorithm=settings.jwt_algorithm,
+        )
+    )
+    app.include_router(
+        create_devices_router(
+            session_factory=session_factory,
+            jwt_secret=settings.jwt_secret,
+            jwt_algorithm=settings.jwt_algorithm,
+        )
+    )
+    app.include_router(
+        create_anomalies_router(
+            session_factory=session_factory,
+            jwt_secret=settings.jwt_secret,
+            jwt_algorithm=settings.jwt_algorithm,
+        )
+    )
 
-    app.include_router(create_stream_router(
-        broadcaster=broadcaster,
-        session_factory=session_factory,
-        repo=repo,
-        registry=registry,
-        jwt_secret=settings.jwt_secret,
-        jwt_algorithm=settings.jwt_algorithm,
-    ))
+    app.include_router(
+        create_stream_router(
+            broadcaster=broadcaster,
+            session_factory=session_factory,
+            repo=repo,
+            registry=registry,
+            jwt_secret=settings.jwt_secret,
+            jwt_algorithm=settings.jwt_algorithm,
+        )
+    )
 
-    app.include_router(create_dead_letter_router(
-        session_factory=session_factory,
-        event_bus=event_bus,
-        jwt_secret=settings.jwt_secret,
-        jwt_algorithm=settings.jwt_algorithm,
-    ))
+    app.include_router(
+        create_dead_letter_router(
+            session_factory=session_factory,
+            event_bus=event_bus,
+            jwt_secret=settings.jwt_secret,
+            jwt_algorithm=settings.jwt_algorithm,
+        )
+    )
 
-    app.include_router(create_metrics_router(
-        engine=engine.sync_engine,
-        redis=redis,
-        event_bus=event_bus,
-        metrics_token=settings.metrics_token,
-    ))
+    app.include_router(
+        create_metrics_router(
+            engine=engine.sync_engine,
+            redis=redis,
+            event_bus=event_bus,
+            metrics_token=settings.metrics_token,
+        )
+    )
 
     # Store references for probes and metrics access
     app.state.session_factory = session_factory

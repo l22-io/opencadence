@@ -25,9 +25,7 @@ class SampleRepository:
             for sample in payload.batch
         ]
 
-    async def insert_samples(
-        self, session: AsyncSession, payload: IngestPayload
-    ) -> int:
+    async def insert_samples(self, session: AsyncSession, payload: IngestPayload) -> int:
         rows = self.payload_to_rows(payload)
         stmt = text("""
             INSERT INTO raw_samples (time, device_id, metric, value, unit, source)

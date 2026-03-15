@@ -26,14 +26,10 @@ class IngestionService:
         for i, sample in enumerate(payload.batch):
             metric_def = self._registry.get(sample.metric)
             if metric_def is None:
-                errors.append(
-                    f"Sample {i}: unknown metric '{sample.metric}'"
-                )
+                errors.append(f"Sample {i}: unknown metric '{sample.metric}'")
                 continue
 
             if sample.timestamp > now + self.MAX_FUTURE_OFFSET:
-                errors.append(
-                    f"Sample {i}: future timestamp {sample.timestamp.isoformat()}"
-                )
+                errors.append(f"Sample {i}: future timestamp {sample.timestamp.isoformat()}")
 
         return errors

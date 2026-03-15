@@ -171,17 +171,36 @@ def test_export_csv(mock_factory_fn, mock_repo):
     factory, session = _mock_factory()
     mock_factory_fn.return_value = factory
     repo_instance = mock_repo.return_value
-    repo_instance.query_raw = AsyncMock(return_value=[
-        {"time": datetime(2026, 3, 1, tzinfo=UTC), "value": 72.0, "unit": "bpm",
-         "source": "healthkit"},
-        {"time": datetime(2026, 3, 1, 0, 1, tzinfo=UTC), "value": 75.0, "unit": "bpm",
-         "source": "healthkit"},
-    ])
+    repo_instance.query_raw = AsyncMock(
+        return_value=[
+            {
+                "time": datetime(2026, 3, 1, tzinfo=UTC),
+                "value": 72.0,
+                "unit": "bpm",
+                "source": "healthkit",
+            },
+            {
+                "time": datetime(2026, 3, 1, 0, 1, tzinfo=UTC),
+                "value": 75.0,
+                "unit": "bpm",
+                "source": "healthkit",
+            },
+        ]
+    )
 
-    result = runner.invoke(app, [
-        "export", str(uuid4()), "--metric", "heart_rate",
-        "--start", "2026-03-01", "--end", "2026-03-14",
-    ])
+    result = runner.invoke(
+        app,
+        [
+            "export",
+            str(uuid4()),
+            "--metric",
+            "heart_rate",
+            "--start",
+            "2026-03-01",
+            "--end",
+            "2026-03-14",
+        ],
+    )
     assert result.exit_code == 0
     assert "time,value,unit,source" in result.stdout
     assert "72.0" in result.stdout
@@ -194,15 +213,32 @@ def test_export_json(mock_factory_fn, mock_repo):
     factory, session = _mock_factory()
     mock_factory_fn.return_value = factory
     repo_instance = mock_repo.return_value
-    repo_instance.query_raw = AsyncMock(return_value=[
-        {"time": datetime(2026, 3, 1, tzinfo=UTC), "value": 72.0, "unit": "bpm",
-         "source": "healthkit"},
-    ])
+    repo_instance.query_raw = AsyncMock(
+        return_value=[
+            {
+                "time": datetime(2026, 3, 1, tzinfo=UTC),
+                "value": 72.0,
+                "unit": "bpm",
+                "source": "healthkit",
+            },
+        ]
+    )
 
-    result = runner.invoke(app, [
-        "export", str(uuid4()), "--metric", "heart_rate",
-        "--start", "2026-03-01", "--end", "2026-03-14", "--format", "json",
-    ])
+    result = runner.invoke(
+        app,
+        [
+            "export",
+            str(uuid4()),
+            "--metric",
+            "heart_rate",
+            "--start",
+            "2026-03-01",
+            "--end",
+            "2026-03-14",
+            "--format",
+            "json",
+        ],
+    )
     assert result.exit_code == 0
     data = json_mod.loads(result.stdout)
     assert len(data) == 1
@@ -215,15 +251,31 @@ def test_export_json_global_flag(mock_factory_fn, mock_repo):
     factory, session = _mock_factory()
     mock_factory_fn.return_value = factory
     repo_instance = mock_repo.return_value
-    repo_instance.query_raw = AsyncMock(return_value=[
-        {"time": datetime(2026, 3, 1, tzinfo=UTC), "value": 72.0, "unit": "bpm",
-         "source": "healthkit"},
-    ])
+    repo_instance.query_raw = AsyncMock(
+        return_value=[
+            {
+                "time": datetime(2026, 3, 1, tzinfo=UTC),
+                "value": 72.0,
+                "unit": "bpm",
+                "source": "healthkit",
+            },
+        ]
+    )
 
-    result = runner.invoke(app, [
-        "--json", "export", str(uuid4()), "--metric", "heart_rate",
-        "--start", "2026-03-01", "--end", "2026-03-14",
-    ])
+    result = runner.invoke(
+        app,
+        [
+            "--json",
+            "export",
+            str(uuid4()),
+            "--metric",
+            "heart_rate",
+            "--start",
+            "2026-03-01",
+            "--end",
+            "2026-03-14",
+        ],
+    )
     assert result.exit_code == 0
     data = json_mod.loads(result.stdout)
     assert len(data) == 1
@@ -237,10 +289,19 @@ def test_export_empty(mock_factory_fn, mock_repo):
     repo_instance = mock_repo.return_value
     repo_instance.query_raw = AsyncMock(return_value=[])
 
-    result = runner.invoke(app, [
-        "export", str(uuid4()), "--metric", "heart_rate",
-        "--start", "2026-03-01", "--end", "2026-03-14",
-    ])
+    result = runner.invoke(
+        app,
+        [
+            "export",
+            str(uuid4()),
+            "--metric",
+            "heart_rate",
+            "--start",
+            "2026-03-01",
+            "--end",
+            "2026-03-14",
+        ],
+    )
     assert result.exit_code == 0
 
 

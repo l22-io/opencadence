@@ -38,9 +38,7 @@ class ProcessingService:
                 logger.warning("Unknown processor: %s", name)
         return processors
 
-    def process(
-        self, device_id: UUID, samples: list[Sample]
-    ) -> ProcessingResult:
+    def process(self, device_id: UUID, samples: list[Sample]) -> ProcessingResult:
         processed: list[Sample] = []
         all_anomalies: list[tuple[Sample, AnomalyFlag]] = []
 
@@ -50,9 +48,7 @@ class ProcessingService:
                 logger.warning("Skipping unknown metric: %s", sample.metric)
                 continue
 
-            ctx = ProcessingContext(
-                device_id=device_id, metric_def=metric_def
-            )
+            ctx = ProcessingContext(device_id=device_id, metric_def=metric_def)
             processors = self._get_processors(metric_def.processors)
 
             current = sample
@@ -69,6 +65,4 @@ class ProcessingService:
                         validator=type(proc).__name__,
                     ).inc(len(ctx.anomalies))
 
-        return ProcessingResult(
-            processed_samples=processed, anomalies=all_anomalies
-        )
+        return ProcessingResult(processed_samples=processed, anomalies=all_anomalies)

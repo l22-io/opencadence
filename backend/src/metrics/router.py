@@ -23,9 +23,7 @@ def create_metrics_router(
             if authorization != expected:
                 raise HTTPException(status_code=401, detail="Unauthorized")
 
-        await collect_infra_metrics(
-            engine=engine, redis=redis, event_bus=event_bus
-        )
+        await collect_infra_metrics(engine=engine, redis=redis, event_bus=event_bus)
 
         return Response(
             content=generate_latest(),

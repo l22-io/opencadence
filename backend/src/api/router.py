@@ -27,7 +27,9 @@ def create_api_router(
         if jwt_secret is None:
             raise HTTPException(status_code=500, detail="Auth not configured")
         return await require_jwt(
-            secret=jwt_secret, algorithm=jwt_algorithm, authorization=authorization,
+            secret=jwt_secret,
+            algorithm=jwt_algorithm,
+            authorization=authorization,
         )
 
     @router.get("/data", response_model=DataQueryResponse)
@@ -49,8 +51,10 @@ def create_api_router(
                 rows = await repo.query_raw(session, device_id, metric, start, end)
                 samples = [
                     RawSample(
-                        time=r["time"], value=r["value"],
-                        unit=r["unit"], source=r["source"],
+                        time=r["time"],
+                        value=r["value"],
+                        unit=r["unit"],
+                        source=r["source"],
                     )
                     for r in rows
                 ]

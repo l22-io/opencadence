@@ -42,7 +42,5 @@ class PrometheusMiddleware:
         finally:
             duration = time.monotonic() - start
             HTTP_IN_FLIGHT.dec()
-            HTTP_REQUESTS_TOTAL.labels(
-                method=method, path=path, status=str(status_code)
-            ).inc()
+            HTTP_REQUESTS_TOTAL.labels(method=method, path=path, status=str(status_code)).inc()
             HTTP_REQUEST_DURATION.labels(method=method, path=path).observe(duration)

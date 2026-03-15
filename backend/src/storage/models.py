@@ -35,9 +35,7 @@ class RawSample(Base):
         DateTime(timezone=True), server_default=text("now()")
     )
 
-    __table_args__ = (
-        Index("ix_raw_samples_device_metric", "device_id", "metric"),
-    )
+    __table_args__ = (Index("ix_raw_samples_device_metric", "device_id", "metric"),)
 
 
 class Device(Base):
@@ -51,9 +49,7 @@ class Device(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=text("now()")
     )
-    revoked_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class Anomaly(Base):
@@ -83,6 +79,4 @@ class DeadLetter(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=text("now()")
     )
-    replayed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    replayed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

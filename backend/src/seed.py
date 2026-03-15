@@ -1,4 +1,5 @@
 """Generate demo data for exploring the API."""
+
 import asyncio
 import math
 import random
@@ -45,14 +46,16 @@ async def seed() -> None:
             # Simulate circadian rhythm
             base_hr = 60 + 10 * math.sin(2 * math.pi * (hour - 6) / 24)
             hr = base_hr + random.gauss(0, 5)
-            samples.append({
-                "time": t,
-                "device_id": device_id,
-                "metric": "heart_rate",
-                "value": round(max(40, min(180, hr)), 1),
-                "unit": "bpm",
-                "source": "apple_watch_series_9",
-            })
+            samples.append(
+                {
+                    "time": t,
+                    "device_id": device_id,
+                    "metric": "heart_rate",
+                    "value": round(max(40, min(180, hr)), 1),
+                    "unit": "bpm",
+                    "source": "apple_watch_series_9",
+                }
+            )
             t += timedelta(minutes=1)
 
         # Bulk insert

@@ -39,9 +39,7 @@ def test_anomalies_flagged_counter():
     before = _counter_value(
         ANOMALIES_FLAGGED, {"metric_type": "heart_rate", "validator": "RangeValidator"}
     )
-    ANOMALIES_FLAGGED.labels(
-        metric_type="heart_rate", validator="RangeValidator"
-    ).inc()
+    ANOMALIES_FLAGGED.labels(metric_type="heart_rate", validator="RangeValidator").inc()
     after = _counter_value(
         ANOMALIES_FLAGGED, {"metric_type": "heart_rate", "validator": "RangeValidator"}
     )

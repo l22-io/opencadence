@@ -46,14 +46,16 @@ def broadcaster():
 def client(broadcaster, registry):
     app = FastAPI()
     repo = SampleRepository()
-    app.include_router(create_stream_router(
-        broadcaster=broadcaster,
-        session_factory=None,
-        repo=repo,
-        registry=registry,
-        jwt_secret=JWT_SECRET,
-        jwt_algorithm="HS256",
-    ))
+    app.include_router(
+        create_stream_router(
+            broadcaster=broadcaster,
+            session_factory=None,
+            repo=repo,
+            registry=registry,
+            jwt_secret=JWT_SECRET,
+            jwt_algorithm="HS256",
+        )
+    )
     return TestClient(app)
 
 
@@ -71,11 +73,13 @@ def test_ws_connect_and_subscribe(client, broadcaster):
     device_id = uuid4()
     token = create_jwt_token([device_id], secret=JWT_SECRET)
     with client.websocket_connect(f"/api/v1/stream?token={token}") as ws:
-        ws.send_json({
-            "action": "subscribe",
-            "device_ids": [str(device_id)],
-            "metrics": ["heart_rate"],
-        })
+        ws.send_json(
+            {
+                "action": "subscribe",
+                "device_ids": [str(device_id)],
+                "metrics": ["heart_rate"],
+            }
+        )
         response = ws.receive_json()
         assert response["type"] == "subscribed"
         assert str(device_id) in response["device_ids"]
@@ -86,10 +90,12 @@ def test_ws_subscribe_unauthorized_device(client):
     other_id = uuid4()
     token = create_jwt_token([device_id], secret=JWT_SECRET)
     with client.websocket_connect(f"/api/v1/stream?token={token}") as ws:
-        ws.send_json({
-            "action": "subscribe",
-            "device_ids": [str(other_id)],
-        })
+        ws.send_json(
+            {
+                "action": "subscribe",
+                "device_ids": [str(other_id)],
+            }
+        )
         response = ws.receive_json()
         assert response["type"] == "error"
         assert "not authorized" in response["message"].lower()
@@ -99,11 +105,13 @@ def test_ws_subscribe_unknown_metric(client, registry):
     device_id = uuid4()
     token = create_jwt_token([device_id], secret=JWT_SECRET)
     with client.websocket_connect(f"/api/v1/stream?token={token}") as ws:
-        ws.send_json({
-            "action": "subscribe",
-            "device_ids": [str(device_id)],
-            "metrics": ["nonexistent"],
-        })
+        ws.send_json(
+            {
+                "action": "subscribe",
+                "device_ids": [str(device_id)],
+                "metrics": ["nonexistent"],
+            }
+        )
         response = ws.receive_json()
         assert response["type"] == "error"
         assert "nonexistent" in response["message"]
@@ -113,16 +121,20 @@ def test_ws_unsubscribe(client):
     device_id = uuid4()
     token = create_jwt_token([device_id], secret=JWT_SECRET)
     with client.websocket_connect(f"/api/v1/stream?token={token}") as ws:
-        ws.send_json({
-            "action": "subscribe",
-            "device_ids": [str(device_id)],
-        })
+        ws.send_json(
+            {
+                "action": "subscribe",
+                "device_ids": [str(device_id)],
+            }
+        )
         ws.receive_json()  # subscribed ack
 
-        ws.send_json({
-            "action": "unsubscribe",
-            "device_ids": [str(device_id)],
-        })
+        ws.send_json(
+            {
+                "action": "unsubscribe",
+                "device_ids": [str(device_id)],
+            }
+        )
         response = ws.receive_json()
         assert response["type"] == "unsubscribed"
 
@@ -146,14 +158,16 @@ def _make_backfill_client(broadcaster, registry):
 
     app = FastAPI()
     repo = SampleRepository()
-    app.include_router(create_stream_router(
-        broadcaster=broadcaster,
-        session_factory=session_factory,
-        repo=repo,
-        registry=registry,
-        jwt_secret=JWT_SECRET,
-        jwt_algorithm="HS256",
-    ))
+    app.include_router(
+        create_stream_router(
+            broadcaster=broadcaster,
+            session_factory=session_factory,
+            repo=repo,
+            registry=registry,
+            jwt_secret=JWT_SECRET,
+            jwt_algorithm="HS256",
+        )
+    )
     return TestClient(app)
 
 
@@ -163,12 +177,14 @@ def test_ws_subscribe_with_since_sends_backfill(broadcaster, registry):
     client = _make_backfill_client(broadcaster, registry)
 
     with client.websocket_connect(f"/api/v1/stream?token={token}") as ws:
-        ws.send_json({
-            "action": "subscribe",
-            "device_ids": [str(device_id)],
-            "metrics": ["heart_rate"],
-            "since": "2026-03-13T10:00:00Z",
-        })
+        ws.send_json(
+            {
+                "action": "subscribe",
+                "device_ids": [str(device_id)],
+                "metrics": ["heart_rate"],
+                "since": "2026-03-13T10:00:00Z",
+            }
+        )
 
         # First: backfill data
         msg = ws.receive_json()

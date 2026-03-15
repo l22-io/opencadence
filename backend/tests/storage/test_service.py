@@ -10,11 +10,14 @@ from src.storage.service import StorageService
 
 def _make_payload() -> IngestPayload:
     from datetime import UTC, datetime
+
     return IngestPayload(
         device_id=uuid4(),
         batch=[
             Sample(
-                metric="heart_rate", value=72.0, unit="bpm",
+                metric="heart_rate",
+                value=72.0,
+                unit="bpm",
                 timestamp=datetime(2026, 3, 14, 12, 0, tzinfo=UTC),
                 source="healthkit",
             ),

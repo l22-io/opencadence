@@ -99,9 +99,7 @@ async def test_require_jwt_valid() -> None:
     device_ids = [uuid4(), uuid4()]
     token = create_jwt_token(device_ids, secret=JWT_SECRET)
 
-    claims = await require_jwt(
-        secret=JWT_SECRET, authorization=f"Bearer {token}"
-    )
+    claims = await require_jwt(secret=JWT_SECRET, authorization=f"Bearer {token}")
     assert isinstance(claims, JWTClaims)
     assert claims.device_ids == device_ids
 

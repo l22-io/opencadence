@@ -35,9 +35,7 @@ def create_devices_router(
             ORDER BY created_at ASC
         """)
         async with session_factory() as session:
-            result = await session.execute(
-                stmt, {"device_ids": list(claims.device_ids)}
-            )
+            result = await session.execute(stmt, {"device_ids": list(claims.device_ids)})
             rows = [dict(row._mapping) for row in result]
 
         return [

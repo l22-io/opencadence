@@ -22,12 +22,13 @@ def _make_metric() -> MetricDefinition:
 def test_range_validator_passes_valid() -> None:
     validator = RangeValidator()
     sample = Sample(
-        metric="heart_rate", value=72.0, unit="bpm",
-        timestamp=datetime.now(UTC), source="test",
+        metric="heart_rate",
+        value=72.0,
+        unit="bpm",
+        timestamp=datetime.now(UTC),
+        source="test",
     )
-    ctx = ProcessingContext(
-        device_id=uuid4(), metric_def=_make_metric(), anomalies=[]
-    )
+    ctx = ProcessingContext(device_id=uuid4(), metric_def=_make_metric(), anomalies=[])
     result = validator.process(sample, ctx)
     assert result == sample
     assert len(ctx.anomalies) == 0
@@ -36,12 +37,13 @@ def test_range_validator_passes_valid() -> None:
 def test_range_validator_flags_out_of_range() -> None:
     validator = RangeValidator()
     sample = Sample(
-        metric="heart_rate", value=350.0, unit="bpm",
-        timestamp=datetime.now(UTC), source="test",
+        metric="heart_rate",
+        value=350.0,
+        unit="bpm",
+        timestamp=datetime.now(UTC),
+        source="test",
     )
-    ctx = ProcessingContext(
-        device_id=uuid4(), metric_def=_make_metric(), anomalies=[]
-    )
+    ctx = ProcessingContext(device_id=uuid4(), metric_def=_make_metric(), anomalies=[])
     result = validator.process(sample, ctx)
     assert result == sample  # sample passes through, but anomaly is flagged
     assert len(ctx.anomalies) == 1

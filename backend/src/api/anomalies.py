@@ -39,9 +39,7 @@ def create_anomalies_router(
         claims: JWTClaims = Depends(get_jwt_claims),  # noqa: B008
     ) -> list[AnomalyResponse]:
         if device_id not in claims.device_ids:
-            raise HTTPException(
-                status_code=403, detail="Device not authorized"
-            )
+            raise HTTPException(status_code=403, detail="Device not authorized")
 
         where = "device_id = :device_id AND time >= :start AND time < :end"
         params: dict[str, Any] = {

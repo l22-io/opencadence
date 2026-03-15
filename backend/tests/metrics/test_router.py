@@ -28,7 +28,9 @@ def _make_app(engine, redis, event_bus, metrics_token=None):
     app = FastAPI()
     app.include_router(
         create_metrics_router(
-            engine=engine, redis=redis, event_bus=event_bus,
+            engine=engine,
+            redis=redis,
+            event_bus=event_bus,
             metrics_token=metrics_token,
         )
     )
@@ -70,8 +72,6 @@ def test_metrics_auth_required_when_token_set(mock_app_state):
     assert response.status_code == 401
 
     # Correct token
-    response = client.get(
-        "/metrics", headers={"Authorization": "Bearer secret-token"}
-    )
+    response = client.get("/metrics", headers={"Authorization": "Bearer secret-token"})
     assert response.status_code == 200
     assert "oc_http_requests_total" in response.text
