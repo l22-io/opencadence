@@ -12,7 +12,7 @@ If you discover a security issue in OpenCadence, please report it responsibly.
 
 **Do not open a public GitHub issue for security concerns.**
 
-Instead, please email: **security@opencadence.dev**
+Instead, please email: **security@letter22.io**
 
 ### What to include
 
